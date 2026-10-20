@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import Shell from '@/components/Shell'
 import { toast } from '@/components/Toaster'
+import Avatar from '@/components/Avatar'
 import { useStore, Role, dealValue, isWon, isLost, arrOf } from '@/lib/store'
 const inr = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN')
 export default function Team() {
@@ -17,7 +18,7 @@ export default function Team() {
       <h1 className="text-2xl font-semibold">Team</h1><p className="mb-6 text-sm text-mute">{reps.length} sales reps. Tap a rep to see their progress.</p>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{reps.map((u) => { const mine = deals.filter((d) => d.rep === u.name); const won = mine.filter(isWon).reduce((s, d) => s + dealValue(quotes, d.id), 0); const pct = u.target ? Math.min(100, Math.round((won / u.target) * 100)) : 0
         return <Link key={u.id} href={`/${role}/team/${u.id}`} className="box transition hover:border-brand hover:shadow-md">
-          <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-brand/10 font-semibold text-brand">{u.name[0]}</span><div className="min-w-0"><p className="font-medium">{u.name}</p><p className="truncate text-xs text-mute">{u.email}</p></div></div>
+          <div className="flex items-center gap-3"><Avatar name={u.name} photo={u.photo} size={40} /><div className="min-w-0"><p className="font-medium">{u.name}</p><p className="truncate text-xs text-mute">{u.email}</p></div></div>
           <p className="mt-4 flex justify-between text-xs text-mute"><span>{mine.length} deals</span><span>{inr(won)} / {inr(u.target)}</span></p>
           <div className="mt-1 h-2 rounded-full bg-line"><div className="h-2 rounded-full bg-brand" style={{ width: `${pct}%` }} /></div></Link> })}</div>
       <div className="box mt-6"><p className="mb-3 font-medium">Create rep account</p>

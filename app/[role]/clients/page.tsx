@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import Shell from '@/components/Shell'
+import Avatar from '@/components/Avatar'
 import { useStore, Role, dealValue, STAGES } from '@/lib/store'
 export default function Clients() {
   const role = useParams().role as Role; const myName = useStore((s) => s.users.find((u) => u.id === s.meId)?.name); const { deals, quotes, contacts, activity } = useStore(); const [q, setQ] = useState('')
@@ -15,7 +16,7 @@ export default function Clients() {
         <input className="inp max-w-xs" placeholder="Search clients" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && setQ('')} /></div>
       {list.length === 0 && <p className="box text-sm text-mute">No clients match your search.</p>}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{list.map((d) => <Link key={d.id} href={`/${role}/deals/${d.id}`} className="box transition hover:border-brand hover:shadow-md">
-        <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-brand/10 font-semibold text-brand">{d.company[0]}</span>
+        <div className="flex items-center gap-3"><Avatar name={d.company} size={40} />
           <div className="min-w-0"><p className="truncate font-medium">{d.company}</p><p className="text-xs text-mute">{d.client} · Rep {d.rep}</p></div></div>
         <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs"><div><p className="text-base font-semibold">₹{Math.round(dealValue(quotes, d.id)).toLocaleString('en-IN')}</p><p className="text-mute">Value</p></div>
           <div><p className="text-base font-semibold">{contacts.filter((c) => c.dealId === d.id).length}</p><p className="text-mute">Contacts</p></div>

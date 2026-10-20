@@ -15,7 +15,7 @@ const uid = () => Math.random().toString(36).slice(2)
 export type Notif = { id: string; to: Role; text: string; href: string; read: boolean; at: string }
 export type Contact = { id: string; dealId: string; name: string; phone: string; email: string }
 export type FileRec = { id: string; dealId: string; name: string; size: number }
-export type User = { id: string; name: string; email: string; password: string; role: Role; phone: string; city: string; target: number }
+export type User = { id: string; name: string; email: string; password: string; role: Role; phone: string; city: string; target: number; photo?: string }
 export type Invoice = { id: string; dealId: string; quoteId: string; subtotal: number; gst: number; amount: number; date: string; due: string; status: 'Unpaid' | 'Paid'; by: string }
 export type Payment = { id: string; dealId: string; quoteId: string; kind: 'Monthly' | 'Annual'; n: number; of: number; due: string; amount: number; status: 'Due' | 'Paid'; notified?: boolean }
 export type Task = { id: string; dealId: string; title: string; due: string; done: boolean; rep: string }

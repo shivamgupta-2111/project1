@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import Shell from '@/components/Shell'
+import Avatar from '@/components/Avatar'
 import { toast } from '@/components/Toaster'
 import { stageTo } from '@/components/CloseDialog'
 import DealTabs from '@/components/DealTabs'
@@ -27,7 +28,7 @@ export default function Deal() {
   return (
     <Shell role={r}>
       <div className="box">
-        <div className="flex flex-wrap justify-between gap-2"><h1 className="text-lg font-semibold">{d.company}</h1><span className="text-sm text-mute">{d.client} · GST {d.gst}</span></div>
+        <div className="flex flex-wrap justify-between gap-2"><div className="flex items-center gap-3"><Avatar name={d.company} size={40} /><h1 className="text-lg font-semibold">{d.company}</h1></div><span className="text-sm text-mute">{d.client} · GST {d.gst}</span></div>
         <div className="mt-3 flex gap-1 overflow-x-auto">{STAGES.map((s, i) => { const closed = i === 4 && d.stage === 4; const col = closed ? (d.outcome === 'Cancelled' ? 'bg-red-500 text-white' : 'bg-green-600 text-white') : i <= d.stage ? 'bg-brand text-white' : 'border border-line text-mute'
           return <button key={s} onClick={() => stageTo(d.id, i)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${col}`}>{closed ? (d.outcome === 'Cancelled' ? 'Cancelled' : 'Done · Won') : s}</button> })}</div>
         {d.outcome && <div className={`mt-3 rounded-xl border-l-4 p-3 text-sm ${d.outcome === 'Cancelled' ? 'border-red-500 bg-red-500/10' : 'border-green-600 bg-green-600/10'}`}><b>{d.outcome === 'Cancelled' ? 'Deal cancelled' : 'Deal done'}</b>{d.closedAt && <span className="text-mute"> · {d.closedAt}</span>}<p className="mt-1">{d.closeNote}</p></div>}

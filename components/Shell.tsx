@@ -6,12 +6,13 @@ import { useEffect, useState } from 'react'
 import { LayoutDashboard, CheckSquare, Sun, Moon, LogOut, Kanban, Users, ListChecks, BarChart3, Settings as Cog, UserPlus, TrendingUp, Receipt, CalendarClock } from 'lucide-react'
 import { useStore, Role } from '@/lib/store'
 import Bell from '@/components/Bell'
+import Avatar from '@/components/Avatar'
 import TabBar from '@/components/TabBar'
 import { useTabs } from '@/components/tabs'
 const NAME: Record<Role, string> = { rep: 'Anita Rao', admin: 'Admin', ceo: 'CEO' }
 export default function Shell({ role, children, wide }: { role: Role; children: React.ReactNode; wide?: boolean }) {
   const { role: me, setRole, quotes, invoices, tasks, deals, payments, settings } = useStore(); const { resolvedTheme, setTheme } = useTheme(); const path = usePathname(); const r = useRouter()
-  const [ok, setOk] = useState(false); const name = useStore((s) => s.users.find((u) => u.id === s.meId)?.name) || NAME[role]
+  const [ok, setOk] = useState(false); const name = useStore((s) => s.users.find((u) => u.id === s.meId)?.name) || NAME[role]; const photo = useStore((s) => s.users.find((u) => u.id === s.meId)?.photo)
   useEffect(() => { useStore.getState().loadSession(); useStore.getState().checkReminders(); setOk(true); const f = (e: StorageEvent) => { if (e.key === 'crm-store') useStore.persist.rehydrate() }; window.addEventListener('storage', f); return () => window.removeEventListener('storage', f) }, [])
   useEffect(() => { if (ok && me !== role) r.replace('/') }, [ok, me, role, r])
   const users = useStore((s) => s.users); const isTab = /\/(deals|team)\/[^/]+$/.test(path)
@@ -36,16 +37,17 @@ export default function Shell({ role, children, wide }: { role: Role; children: 
       <aside className="hidden w-60 shrink-0 sticky top-0 h-screen scroll-y flex-col self-start overflow-y-auto border-r border-line bg-card p-4 md:flex">
         <p className="mb-8 flex items-center gap-2 text-lg font-semibold"><span className="grid h-8 w-8 place-items-center rounded-xl bg-brand text-white">P</span>Pipeline</p>
         {nav.map((n) => <Link key={n.href} href={n.href} className={`mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${path === n.href ? 'bg-brand/10 font-medium text-brand' : 'text-mute hover:bg-brand/5 hover:text-ink'}`}><n.icon size={17} />{n.label}{badge[n.label] > 0 && <span className="ml-auto rounded-full bg-brand px-2 py-0.5 text-[11px] font-semibold text-white">{badge[n.label]}</span>}</Link>)}
-        <div className="mt-auto flex items-center gap-3 rounded-xl border border-line p-3">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-brand/15 text-sm font-semibold text-brand">{name[0]}</span>
+        <Link href={`/${role}/profile`} title="Edit profile and photo" className="mt-auto flex items-center gap-3 rounded-xl border border-line p-3 transition hover:border-brand">
+          <Avatar name={name} photo={photo} size={36} />
           <div className="text-sm"><p className="font-medium">{name}</p><p className="text-xs capitalize text-mute">{role} portal</p></div>
-        </div>
+        </Link>
         <button className="mt-3 text-xs text-mute hover:text-brand" onClick={() => { if (confirm('Reset all demo data?')) { localStorage.removeItem('crm-store'); location.href = '/' } }}>Reset demo data</button>
       </aside>
       <div className="min-w-0 flex-1 pb-20 md:pb-0">
         <div className="sticky top-0 z-20 border-b border-line bg-bg/80 backdrop-blur"><header className="flex items-center justify-between px-4 py-3 md:px-8">
           <span className="font-semibold md:hidden"><span className="mr-2 inline-grid h-7 w-7 place-items-center rounded-lg bg-brand text-white">P</span>Pipeline</span><span className="hidden md:block" />
           <div className="flex items-center gap-2">
+            <Link href={`/${role}/profile`} className="md:hidden" aria-label="Profile"><Avatar name={name} photo={photo} size={36} /></Link>
             <Bell role={role} />
             <button className="btn2" aria-label="Toggle theme" onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}>{resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</button>
             <button className="btn2" aria-label="Sign out" onClick={() => { useTabs.getState().clear(); setRole(null); r.push('/') }}><LogOut size={16} /></button>
