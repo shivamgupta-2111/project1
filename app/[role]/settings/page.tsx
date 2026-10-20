@@ -18,6 +18,9 @@ export default function SettingsPage() {
           <label className="grid gap-1 text-sm">Admin can approve up to (%)<input type="number" className="inp" value={settings.admin} onChange={(e) => setSettings({ admin: Math.max(settings.auto, num(e.target.value)) })} /></label></div>
         <ul className="mt-4 grid gap-1 text-sm text-mute"><li>0–{settings.auto}%: auto-approved</li><li>{settings.auto}–{settings.admin}%: Admin or CEO</li><li>Above {settings.admin}% or below a product’s minimum price: CEO only</li></ul>
       </div>
+      <div className="box mt-4"><p className="font-medium">Payment reminders</p>
+        <label className="mt-3 grid max-w-xs gap-1 text-sm">Remind before due date (days)<input type="number" className="inp" value={settings.remindDays ?? 7} onChange={(e) => setSettings({ remindDays: Math.max(0, Math.min(60, Number(e.target.value) || 0)) })} /></label>
+        <p className="mt-2 text-xs text-mute">Monthly products remind every month. Annual (ARR) products remind once a year before renewal.</p></div>
       <div className="box mt-4">
         <div className="mb-3 flex items-center justify-between"><p className="font-medium">Products and price list</p><button className="btn2 flex items-center gap-1" onClick={addProduct}><Plus size={16} />Add</button></div>
         <div className="overflow-x-auto"><table className="w-full min-w-[680px] text-left text-sm"><thead className="text-xs text-mute"><tr><th className="pb-2 font-medium">Product</th><th className="font-medium">Billing</th><th className="font-medium">List price (₹)</th><th className="font-medium">Minimum price (₹)</th><th /></tr></thead>

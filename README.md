@@ -24,3 +24,9 @@ Each browser tab keeps its own login. Open Rep, Admin and CEO in three tabs; the
 Settings → Products → Billing: One-time, Monthly or Annual (ARR). Quotes show term in months, ARR and MRR.
 ## Closing a deal
 Moving a deal to Closed asks: Deal done (green) or Cancelled (red), plus a required note. Cancelled deals appear under Churn.
+## Payment reminders
+Mark a quote Final → payment schedule is created (Monthly: one per month for the term; Annual/ARR: one per year). Payments page + dashboard + bell remind N days before due (Settings → Payment reminders). Admin marks paid.
+## In-app tabs
+Opening a deal or rep adds a numbered tab under the header. Click a tab to switch, double-click or the pencil to rename, X to close, Alt+1..9 to jump. Esc cancels a rename, closes pop-ups and the alert list, and clears search boxes.
+## Payment reminders
+Mark a quote with a Monthly or Annual product as Final: a payment schedule is created. Reminders start N days before each due date (Settings). See Dashboard, Payments page and the bell.

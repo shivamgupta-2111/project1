@@ -10,11 +10,12 @@ import DealInfo from '@/components/DealInfo'
 import { useStore, Role, Quote, STAGES, discountPct, needOf, total, lineAmt, arrOf } from '@/lib/store'
 export default function Deal() {
   const { role: r, id } = useParams() as { role: Role; id: string }
-  const { deals, quotes, addQuote, saveQuote, submit, setStatus, setStage, products, settings, markFinal, invoices, createInvoice } = useStore()
+  const { deals, quotes, addQuote, saveQuote, submit, setStatus, setStage, products, settings, markFinal, invoices, createInvoice, payments } = useStore()
   const d = deals.find((x) => x.id === id); const qs = quotes.filter((q) => q.dealId === id)
   const [sel, setSel] = useState<string | null>(null); const [reason, setReason] = useState('')
   const q = qs.find((x) => x.id === sel) || qs[0]
   const finalQ = qs.find((x) => x.final); const inv = finalQ && invoices.find((i) => i.quoteId === finalQ.id)
+  const next = payments.filter((p) => p.dealId === id && p.status === 'Due').sort((a, b) => a.due.localeCompare(b.due))[0]
   if (!d) return <Shell role={r}><p>Deal not found.</p></Shell>
   const upd = (i: number, k: 'product' | 'qty' | 'price' | 'term', v: string) => { if (!q) return
     const items = q.items.map((it, n) => { if (n !== i) return it
@@ -31,7 +32,7 @@ export default function Deal() {
           return <button key={s} onClick={() => stageTo(d.id, i)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${col}`}>{closed ? (d.outcome === 'Cancelled' ? 'Cancelled' : 'Done · Won') : s}</button> })}</div>
         {d.outcome && <div className={`mt-3 rounded-xl border-l-4 p-3 text-sm ${d.outcome === 'Cancelled' ? 'border-red-500 bg-red-500/10' : 'border-green-600 bg-green-600/10'}`}><b>{d.outcome === 'Cancelled' ? 'Deal cancelled' : 'Deal done'}</b>{d.closedAt && <span className="text-mute"> · {d.closedAt}</span>}<p className="mt-1">{d.closeNote}</p></div>}
       </div>
-      {finalQ && <div className="box mt-4 flex flex-wrap items-center justify-between gap-3 border-brand/50 bg-brand/5"><div><p className="text-xs text-mute">Final amount · {finalQ.id} v{finalQ.version}</p><p className="text-2xl font-semibold">₹{Math.round(total(finalQ)).toLocaleString('en-IN')}</p></div>
+      {finalQ && <div className="box mt-4 flex flex-wrap items-center justify-between gap-3 border-brand/50 bg-brand/5"><div><p className="text-xs text-mute">Final amount · {finalQ.id} v{finalQ.version}</p><p className="text-2xl font-semibold">₹{Math.round(total(finalQ)).toLocaleString('en-IN')}</p>{next && <p className="mt-1 text-xs text-mute">Next {next.kind.toLowerCase()} payment {next.n}/{next.of}: ₹{Math.round(next.amount).toLocaleString('en-IN')} due {next.due}</p>}</div>
         {inv ? <Link href={`/${r}/invoices/${inv.id}`} className="btn2">View invoice {inv.id}</Link> : r === 'admin' ? <button className="btn" onClick={() => { const id = createInvoice(finalQ.id, 'Admin'); toast(`Invoice ${id} created`) }}>Create invoice</button> : <span className="text-sm text-mute">Waiting for Admin to create the invoice</span>}</div>}
       <DealInfo dealId={d.id} />
       <DealTabs dealId={d.id} who={r === 'rep' ? d.rep : r} />

@@ -17,9 +17,10 @@ export type Contact = { id: string; dealId: string; name: string; phone: string;
 export type FileRec = { id: string; dealId: string; name: string; size: number }
 export type User = { id: string; name: string; email: string; password: string; role: Role; phone: string; city: string; target: number }
 export type Invoice = { id: string; dealId: string; quoteId: string; subtotal: number; gst: number; amount: number; date: string; due: string; status: 'Unpaid' | 'Paid'; by: string }
+export type Payment = { id: string; dealId: string; quoteId: string; kind: 'Monthly' | 'Annual'; n: number; of: number; due: string; amount: number; status: 'Due' | 'Paid'; notified?: boolean }
 export type Task = { id: string; dealId: string; title: string; due: string; done: boolean; rep: string }
 export type Product = { id: string; name: string; list: number; min: number; billing?: Billing }
-export type Settings = { auto: number; admin: number }
+export type Settings = { auto: number; admin: number; remindDays?: number }
 export const STAGES = ['Discover', 'Identify', 'Next', 'Proposal', 'Closed']
 const mult = (i: Item) => (i.billing === 'Monthly' ? i.term ?? 12 : i.billing === 'Annual' ? (i.term ?? 12) / 12 : 1)
 export const lineAmt = (i: Item) => i.price * i.qty * mult(i)
@@ -33,8 +34,19 @@ export const needFor = (d: number, l: Settings = { auto: 5, admin: 15 }): 'auto'
 export const belowMin = (q: Quote, ps: Product[]) => q.items.some((i) => { const p = ps.find((x) => x.name === i.product); return !!p && i.price < p.min })
 export const needOf = (q: Quote, l: Settings, ps: Product[]) => (belowMin(q, ps) ? 'ceo' : needFor(discountPct(q), l))
 export const dealValue = (qs: Quote[], id: string) => { const a = qs.filter((q) => q.dealId === id && q.status !== 'Rejected'); const w = a.find((q) => q.final) || a.find((q) => q.status === 'Accepted'); return w ? total(w) : Math.max(0, ...a.map(total)) }
+const addM = (iso: string, n: number) => { const [y, m, d] = iso.split('-').map(Number); const t = new Date(Date.UTC(y, m - 1 + n, 1)); const last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate(); t.setUTCDate(Math.min(d, last)); return t.toISOString().slice(0, 10) }
+// Payment schedule: Monthly lines bill every month for the term, Annual lines bill once per year
+export const payPlan = (dealId: string, quoteId: string, items: Item[], start: string): Payment[] => {
+  const out: Payment[] = []; const g = (i: Item) => i.price * i.qty * (1 + i.gst / 100)
+  const mTerm = Math.max(0, ...items.filter((i) => i.billing === 'Monthly').map((i) => i.term ?? 12))
+  for (let k = 0; k < mTerm; k++) out.push({ id: uid(), dealId, quoteId, kind: 'Monthly', n: k + 1, of: mTerm, due: addM(start, k), amount: items.filter((i) => i.billing === 'Monthly' && (i.term ?? 12) > k).reduce((s, i) => s + g(i), 0), status: 'Due' })
+  const yrs = Math.max(0, ...items.filter((i) => i.billing === 'Annual').map((i) => Math.ceil((i.term ?? 12) / 12)))
+  for (let k = 0; k < yrs; k++) out.push({ id: uid(), dealId, quoteId, kind: 'Annual', n: k + 1, of: yrs, due: addM(start, 12 * k), amount: items.filter((i) => i.billing === 'Annual' && Math.ceil((i.term ?? 12) / 12) > k).reduce((s, i) => s + g(i), 0), status: 'Due' })
+  return out
+}
 const it = (p: string, q: number, l: number, pr: number, billing: Billing = 'One-time', term = 1): Item => ({ id: Math.random().toString(36).slice(2), product: p, qty: q, list: l, price: pr, gst: 18, billing, term })
 type S = {
+  payments: Payment[]; markPaid: (id: string, paid: boolean) => void; checkReminders: () => void
   loadSession: () => void; closeDeal: (id: string, outcome: 'Won' | 'Cancelled', note: string) => void
   users: User[]; meId: string | null; invoices: Invoice[]
   login: (email: string, pw: string) => User | null; addUser: (u: Omit<User, 'id' | 'role'>) => string | null; updateUser: (id: string, p: Partial<User>) => void
@@ -77,6 +89,7 @@ export const useStore = create<S>()(persist((set, get) => {
   updateUser: (id, p) => set({ users: get().users.map((x) => (x.id === id ? { ...x, ...p } : x)) }),
   markFinal: (id) => { const q = get().quotes.find((x) => x.id === id)!; const amt = total(q); const dl = get().deals.find((d) => d.id === q.dealId)
     set({ quotes: get().quotes.map((x) => (x.dealId !== q.dealId ? x : x.id === id ? { ...x, final: true, status: 'Accepted' as QStatus, log: [...x.log, 'Marked as final'] } : { ...x, final: false, status: x.status === 'Accepted' ? ('Sent' as QStatus) : x.status })), deals: get().deals.map((d) => (d.id === q.dealId ? { ...d, amount: amt, stage: 4, outcome: 'Won' as const, closeNote: `Quote ${id} marked final`, closedAt: day(0) } : d)) })
+    set({ payments: [...get().payments.filter((p) => p.dealId !== q.dealId), ...payPlan(q.dealId, id, q.items, day(0))] })
     log(q.dealId, `Quote ${id} marked final · deal amount ₹${Math.round(amt).toLocaleString('en-IN')}`); notify(['admin', 'ceo'], `${id} for ${dl?.company} is final (₹${Math.round(amt).toLocaleString('en-IN')}). Invoice can be created.`, `deals/${q.dealId}`) },
   createInvoice: (qid, by) => { const q = get().quotes.find((x) => x.id === qid)!; const sub = q.items.reduce((s, i) => s + lineAmt(i), 0); const amount = total(q); const id = 'INV-' + String(get().invoices.length + 1).padStart(3, '0'); const dl = get().deals.find((d) => d.id === q.dealId)
     set({ invoices: [{ id, dealId: q.dealId, quoteId: qid, subtotal: sub, gst: amount - sub, amount, date: day(0), due: day(15), status: 'Unpaid', by }, ...get().invoices] })
@@ -89,7 +102,14 @@ export const useStore = create<S>()(persist((set, get) => {
     { id: 't4', dealId: 'D-5', title: 'Schedule product demo', due: day(3), done: false, rep: 'Anita' },
     { id: 't5', dealId: 'D-6', title: 'Confirm budget with Priya', due: day(0), done: false, rep: 'Vikram' },
     { id: 't6', dealId: 'D-4', title: 'Onboarding kickoff call', due: day(-3), done: true, rep: 'Anita' }],
-  settings: { auto: 5, admin: 15 },
+  payments: [
+    ...payPlan('D-10', 'Q-008', [it('CRM Subscription', 15, 1000, 1000, 'Monthly', 12)], addM(day(4), -2)).map((p) => (p.n <= 2 ? { ...p, status: 'Paid' as const } : p)),
+    ...payPlan('D-11', 'Q-009', [it('Cloud Hosting', 1, 60000, 60000, 'Annual', 24)], addM(day(6), -12)).map((p) => (p.n === 1 ? { ...p, status: 'Paid' as const } : p))],
+  markPaid: (id, paid) => { const p = get().payments.find((x) => x.id === id)!; set({ payments: get().payments.map((x) => (x.id === id ? { ...x, status: paid ? 'Paid' as const : 'Due' as const } : x)) }); log(p.dealId, `${p.kind} payment ${p.n}/${p.of} marked ${paid ? 'paid' : 'unpaid'}`) },
+  checkReminders: () => { const lim = day(get().settings.remindDays ?? 7); const due = get().payments.filter((p) => p.status === 'Due' && !p.notified && p.due <= lim); if (!due.length) return
+    due.forEach((p) => { const dl = get().deals.find((d) => d.id === p.dealId); notify(['admin', 'ceo', 'rep'], `${p.due < day(0) ? 'Overdue' : 'Reminder'}: ${p.kind.toLowerCase()} payment ${p.n}/${p.of} for ${dl?.company} (₹${Math.round(p.amount).toLocaleString('en-IN')}) due ${p.due}`, 'payments') })
+    set({ payments: get().payments.map((p) => (due.some((d) => d.id === p.id) ? { ...p, notified: true } : p)) }) },
+  settings: { auto: 5, admin: 15, remindDays: 7 },
   products: [
     { id: 'p1', name: 'CRM License', list: 1000, min: 800, billing: 'One-time' }, { id: 'p2', name: 'Onboarding', list: 5000, min: 4000, billing: 'One-time' },
     { id: 'p3', name: 'Support Plan', list: 2400, min: 2000, billing: 'One-time' }, { id: 'p4', name: 'Training', list: 1500, min: 1200, billing: 'One-time' }, { id: 'p5', name: 'API Add-on', list: 3000, min: 2500, billing: 'One-time' },
@@ -101,7 +121,7 @@ export const useStore = create<S>()(persist((set, get) => {
   addProduct: () => set({ products: [...get().products, { id: uid(), name: 'New product', list: 1000, min: 800, billing: 'One-time' as Billing }] }),
   updateProduct: (id, p) => set({ products: get().products.map((x) => (x.id === id ? { ...x, ...p } : x)) }),
   delProduct: (id) => set({ products: get().products.filter((x) => x.id !== id) }),
-  contacts: [], files: [],
+  contacts: [{ id: 'c1', dealId: 'D-10', name: 'Dr. Kavita Sen', phone: '98765 00011', email: 'kavita@jupiterhealth.example' }, { id: 'c2', dealId: 'D-11', name: 'Anand Kiran', phone: '98220 55667', email: 'anand@kirancloud.example' }], files: [],
   updateDeal: (id, p) => set({ deals: get().deals.map((d) => (d.id === id ? { ...d, ...p } : d)) }),
   addContact: (c) => { set({ contacts: [...get().contacts, { ...c, id: uid() }] }); log(c.dealId, `Contact ${c.name} added`) },
   delContact: (id) => set({ contacts: get().contacts.filter((x) => x.id !== id) }),
@@ -132,6 +152,7 @@ export const useStore = create<S>()(persist((set, get) => {
     { id: 'D-8', company: 'Horizon Edu', client: 'Meera Iyer', rep: 'Anita', stage: 0, risk: 'Low', gst: '29HHHHH7777H1Z6', target: '2027-01-30', notes: '' },
     { id: 'D-9', company: 'Indigo Print Works', client: 'Rohit Jain', rep: 'Vikram', stage: 4, risk: 'High', gst: '27IIIII8888I1Z1', target: '2026-10-05', notes: '', outcome: 'Cancelled', closeNote: 'Budget frozen. Revisit next quarter.', closedAt: '2026-10-12' },
     { id: 'D-10', company: 'Jupiter Health', client: 'Dr. Kavita Sen', rep: 'Vikram', stage: 4, risk: 'Low', gst: '27JJJJJ9999J1Z0', target: '2026-10-15', notes: '', amount: 212400, outcome: 'Won', closeNote: '12-month subscription signed.', closedAt: '2026-10-15' },
+    { id: 'D-11', company: 'Kiran Cloud Services', client: 'Anand Kiran', rep: 'Anita', stage: 4, risk: 'Low', gst: '29KKKKK1212K1Z5', target: '2026-10-01', notes: '', amount: 141600, outcome: 'Won', closeNote: '2-year hosting contract, billed yearly.', closedAt: '2026-10-01' },
   ],
   quotes: [
     { id: 'Q-001', dealId: 'D-1', version: 1, status: 'Sent', items: [it('CRM License', 10, 1000, 1000)], log: ['Created', 'Auto-approved (discount ≤ 5%)', 'Sent'], expires: '2026-11-10' },
@@ -142,6 +163,7 @@ export const useStore = create<S>()(persist((set, get) => {
     { id: 'Q-006', dealId: 'D-5', version: 1, status: 'Draft', items: [it('Support Plan', 2, 2400, 2400)], log: ['Created'], expires: '2026-12-01' },
     { id: 'Q-007', dealId: 'D-9', version: 1, status: 'Sent', items: [it('Onboarding', 8, 5000, 5000)], log: ['Created', 'Sent'], expires: '2026-10-01' },
     { id: 'Q-008', dealId: 'D-10', version: 1, status: 'Accepted', final: true, items: [it('CRM Subscription', 15, 1000, 1000, 'Monthly', 12)], log: ['Created', 'Auto-approved (discount ≤ 5%)', 'Sent', 'Marked as final'], expires: '2026-10-10' },
+    { id: 'Q-009', dealId: 'D-11', version: 1, status: 'Accepted', final: true, items: [it('Cloud Hosting', 1, 60000, 60000, 'Annual', 24)], log: ['Created', 'Auto-approved (discount ≤ 5%)', 'Sent', 'Marked as final'], expires: '2026-10-01' },
   ],
   setRole: (role) => { try { if (role) sessionStorage.setItem('crm-session', JSON.stringify({ role, meId: get().meId })); else sessionStorage.removeItem('crm-session') } catch {} set({ role, meId: role ? get().meId : null }) },
   addQuote: (dealId, from) => { const n = get().quotes.length + 1; const id = 'Q-' + String(n).padStart(3, '0')

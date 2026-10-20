@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { create } from 'zustand'
 import { useStore, Deal } from '@/lib/store'
 import { toast } from '@/components/Toaster'
+import { useEsc } from '@/components/useEsc'
 type Out = 'Won' | 'Cancelled'
 const useC = create<{ id: string | null; out?: Out }>(() => ({ id: null }))
 export const askClose = (id: string, out?: Out) => useC.setState({ id, out })
@@ -10,7 +11,7 @@ export const stageTo = (id: string, stage: number, out?: Out) => { if (stage ===
 function Dlg({ deal, pre }: { deal: Deal; pre?: Out }) {
   const closeDeal = useStore((s) => s.closeDeal)
   const [out, setOut] = useState<Out>(pre || deal.outcome || 'Won'); const [note, setNote] = useState(deal.closeNote || '')
-  const won = out === 'Won'; const shut = () => useC.setState({ id: null, out: undefined })
+  const won = out === 'Won'; const shut = () => useC.setState({ id: null, out: undefined }); useEsc(true, shut)
   return (
     <div className="fixed inset-0 z-50 grid place-items-end bg-black/50 md:place-items-center md:p-4" onClick={shut}>
       <div role="dialog" aria-label="Close deal" className="w-full max-w-md rounded-t-2xl bg-card p-5 shadow-lg md:rounded-2xl" onClick={(e) => e.stopPropagation()}>

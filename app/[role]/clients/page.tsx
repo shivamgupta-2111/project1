@@ -12,7 +12,7 @@ export default function Clients() {
   return (
     <Shell role={role}>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-semibold">Clients</h1><p className="text-sm text-mute">{mine.length} companies</p></div>
-        <input className="inp max-w-xs" placeholder="Search clients" value={q} onChange={(e) => setQ(e.target.value)} /></div>
+        <input className="inp max-w-xs" placeholder="Search clients" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && setQ('')} /></div>
       {list.length === 0 && <p className="box text-sm text-mute">No clients match your search.</p>}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{list.map((d) => <Link key={d.id} href={`/${role}/deals/${d.id}`} className="box transition hover:border-brand hover:shadow-md">
         <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-brand/10 font-semibold text-brand">{d.company[0]}</span>
