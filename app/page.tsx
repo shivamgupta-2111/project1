@@ -14,19 +14,19 @@ export default function Login() {
   const go = () => { const u = login(email.trim().toLowerCase(), pw); if (!u) return setErr('Email or password is incorrect. Use a demo account below.'); r.push('/' + u.role) }
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
-      <section className="relative hidden flex-col justify-between overflow-hidden p-12 text-white lg:flex" style={{ background: 'linear-gradient(135deg,#ff9a3c 0%,#ee4f7a 50%,#6a5cff 100%)' }}>
-        <div className="absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-cyan-300/30 blur-3xl" /><div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-white/30 blur-3xl" />
-        <p className="relative flex items-center gap-2 text-xl font-semibold"><span className="grid h-9 w-9 place-items-center rounded-full bg-brand">P</span>Pipeline CRM</p>
-        <div className="relative max-w-md">
-          <h1 className="text-4xl font-semibold leading-tight">Close more deals with less chasing.</h1>
-          <p className="mt-4 text-white/75">Track deals, send multiple quotations and get discounts approved in one place.</p>
-          <ul className="mt-8 grid gap-4 text-sm text-white">
-            <li className="glass-soft flex items-center gap-3 rounded-full px-4 py-2.5"><TrendingUp size={18} />Live pipeline and revenue view</li>
-            <li className="glass-soft flex items-center gap-3 rounded-full px-4 py-2.5"><FileText size={18} />Multiple quotations per deal</li>
-            <li className="glass-soft flex items-center gap-3 rounded-full px-4 py-2.5"><ShieldCheck size={18} />Admin and CEO approval for price cuts</li>
+      <section className="relative hidden flex-col justify-between overflow-hidden bg-[#0a0e17] px-[60px] py-10 text-white lg:flex">
+        <div aria-hidden className="pointer-events-none absolute -right-48 -top-56 h-[720px] w-[720px] rounded-full" style={{ background: 'radial-gradient(circle at center, rgba(236,123,34,.34) 0%, rgba(160,80,20,.18) 38%, transparent 68%)', filter: 'blur(30px)' }} />
+        <p className="relative flex items-center gap-3.5 text-[22px] font-semibold"><span className="grid h-[46px] w-[46px] place-items-center rounded-[14px] bg-[#ec7b22] text-[22px] font-semibold text-white">P</span>Pipeline CRM</p>
+        <div className="relative max-w-[560px]">
+          <h1 className="plain text-[44px] font-semibold leading-[1.15] tracking-tight" style={{ color: '#fff' }}>Close more deals with less chasing.</h1>
+          <p className="mt-6 max-w-[520px] text-lg leading-relaxed text-[#8b8f9c]">Track deals, send multiple quotations and get discounts approved in one place.</p>
+          <ul className="mt-9 grid gap-[22px] text-base text-[#e6e7ea]">
+            <li className="flex items-center gap-4"><TrendingUp size={20} strokeWidth={1.75} className="text-[#ec7b22]" />Live pipeline and revenue view</li>
+            <li className="flex items-center gap-4"><FileText size={20} strokeWidth={1.75} className="text-[#ec7b22]" />Multiple quotations per deal</li>
+            <li className="flex items-center gap-4"><ShieldCheck size={20} strokeWidth={1.75} className="text-[#ec7b22]" />Admin and CEO approval for price cuts</li>
           </ul>
         </div>
-        <p className="relative text-xs text-white/75">College project · frontend demo</p>
+        <p className="relative text-sm text-[#6b6f7b]">College project · frontend demo</p>
       </section>
       <section className="relative flex items-center justify-center p-6">
         <button className="btn2 absolute right-4 top-4" aria-label="Toggle theme" onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}>{resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</button>

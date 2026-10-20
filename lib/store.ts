@@ -4,7 +4,7 @@ export type Role = 'rep' | 'admin' | 'ceo'
 export type Billing = 'One-time' | 'Monthly' | 'Annual'
 export type Item = { id: string; product: string; qty: number; list: number; price: number; gst: number; billing?: Billing; term?: number }
 export type QStatus = 'Draft' | 'Pending approval' | 'Approved' | 'Rejected' | 'Sent' | 'Accepted'
-export type Quote = { id: string; dealId: string; version: number; status: QStatus; items: Item[]; reason?: string; need?: 'admin' | 'ceo'; log: string[]; expires: string; final?: boolean }
+export type Quote = { id: string; dealId: string; version: number; status: QStatus; items: Item[]; reason?: string; need?: 'admin' | 'ceo'; log: string[]; expires: string; final?: boolean; startDate?: string }
 export type Deal = { id: string; company: string; client: string; rep: string; stage: number; risk: 'Low' | 'Medium' | 'High'; gst: string; target: string; notes: string; amount?: number; outcome?: 'Won' | 'Cancelled'; closeNote?: string; closedAt?: string }
 export type Act = { id: string; dealId: string; text: string; at: string }
 export type Rec = { id: string; dealId: string; type: 'Call' | 'Meeting' | 'Email' | 'Note'; text: string; at: string; by: string }
@@ -28,6 +28,12 @@ export const arrOf = (q: Quote) => q.items.reduce((s, i) => s + (i.billing === '
 export const isWon = (d: Deal) => d.stage === 4 && d.outcome !== 'Cancelled'
 export const isLost = (d: Deal) => d.stage === 4 && d.outcome === 'Cancelled'
 export const discountPct = (q: Quote) => { const l = q.items.reduce((s, i) => s + i.list * i.qty * mult(i), 0); const p = q.items.reduce((s, i) => s + lineAmt(i), 0); return l ? Math.max(0, ((l - p) / l) * 100) : 0 }
+// Original (list) price vs. what the client pays, per line and per quote (before GST)
+export const origAmt = (i: Item) => i.list * i.qty * mult(i)
+export const lineDiscPct = (i: Item) => (i.list > 0 ? Math.max(0, ((i.list - i.price) / i.list) * 100) : 0)
+export const origTotal = (q: Quote) => q.items.reduce((s, i) => s + origAmt(i), 0)
+export const subTotal = (q: Quote) => q.items.reduce((s, i) => s + lineAmt(i), 0)
+export const discAmt = (q: Quote) => Math.max(0, origTotal(q) - subTotal(q))
 export const total = (q: Quote) => q.items.reduce((s, i) => s + lineAmt(i) * (1 + i.gst / 100), 0)
 // Tiers: <=5% auto, 5-15% admin or ceo, >15% ceo only
 export const needFor = (d: number, l: Settings = { auto: 5, admin: 15 }): 'auto' | 'admin' | 'ceo' => (d <= l.auto ? 'auto' : d <= l.admin ? 'admin' : 'ceo')
@@ -89,7 +95,7 @@ export const useStore = create<S>()(persist((set, get) => {
   updateUser: (id, p) => set({ users: get().users.map((x) => (x.id === id ? { ...x, ...p } : x)) }),
   markFinal: (id) => { const q = get().quotes.find((x) => x.id === id)!; const amt = total(q); const dl = get().deals.find((d) => d.id === q.dealId)
     set({ quotes: get().quotes.map((x) => (x.dealId !== q.dealId ? x : x.id === id ? { ...x, final: true, status: 'Accepted' as QStatus, log: [...x.log, 'Marked as final'] } : { ...x, final: false, status: x.status === 'Accepted' ? ('Sent' as QStatus) : x.status })), deals: get().deals.map((d) => (d.id === q.dealId ? { ...d, amount: amt, stage: 4, outcome: 'Won' as const, closeNote: `Quote ${id} marked final`, closedAt: day(0) } : d)) })
-    set({ payments: [...get().payments.filter((p) => p.dealId !== q.dealId), ...payPlan(q.dealId, id, q.items, day(0))] })
+    set({ payments: [...get().payments.filter((p) => p.dealId !== q.dealId), ...payPlan(q.dealId, id, q.items, q.startDate || day(0))] })
     log(q.dealId, `Quote ${id} marked final · deal amount ₹${Math.round(amt).toLocaleString('en-IN')}`); notify(['admin', 'ceo'], `${id} for ${dl?.company} is final (₹${Math.round(amt).toLocaleString('en-IN')}). Invoice can be created.`, `deals/${q.dealId}`) },
   createInvoice: (qid, by) => { const q = get().quotes.find((x) => x.id === qid)!; const sub = q.items.reduce((s, i) => s + lineAmt(i), 0); const amount = total(q); const id = 'INV-' + String(get().invoices.length + 1).padStart(3, '0'); const dl = get().deals.find((d) => d.id === q.dealId)
     set({ invoices: [{ id, dealId: q.dealId, quoteId: qid, subtotal: sub, gst: amount - sub, amount, date: day(0), due: day(15), status: 'Unpaid', by }, ...get().invoices] })
@@ -167,7 +173,7 @@ export const useStore = create<S>()(persist((set, get) => {
   ],
   setRole: (role) => { try { if (role) sessionStorage.setItem('crm-session', JSON.stringify({ role, meId: get().meId })); else sessionStorage.removeItem('crm-session') } catch {} set({ role, meId: role ? get().meId : null }) },
   addQuote: (dealId, from) => { const n = get().quotes.length + 1; const id = 'Q-' + String(n).padStart(3, '0')
-    const q: Quote = { id, dealId, version: from ? from.version + 1 : 1, status: 'Draft', items: from ? from.items.map((i) => ({ ...i, id: Math.random().toString(36).slice(2) })) : [it('CRM License', 1, 1000, 1000)], log: [from ? `Duplicated from ${from.id}` : 'Created'], expires: new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10) }
+    const q: Quote = { id, dealId, version: from ? from.version + 1 : 1, status: 'Draft', items: from ? from.items.map((i) => ({ ...i, id: Math.random().toString(36).slice(2) })) : [it('CRM License', 1, 1000, 1000)], log: [from ? `Duplicated from ${from.id}` : 'Created'], expires: new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10), startDate: from?.startDate }
     set({ quotes: [...get().quotes, q] }); log(dealId, `Quote ${id} created`); return id },
   saveQuote: (q) => set({ quotes: get().quotes.map((x) => (x.id === q.id ? q : x)) }),
   submit: (id, reason) => { log(dealOf(id), `Quote ${id} submitted`)
