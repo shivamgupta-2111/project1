@@ -49,7 +49,7 @@ export default function Dash() {
       {dueToday.length + overdue.length > 0 && <Link href={`/${role}/tasks`} className="box mb-4 flex items-center justify-between border-brand/50 bg-brand/5 text-sm"><span><b>{dueToday.length} task{dueToday.length === 1 ? '' : 's'} due today</b>{overdue.length > 0 && <span className="text-red-500"> · {overdue.length} overdue</span>}</span><span className="font-medium text-brand">Open tasks →</span></Link>}
       {payDue.length > 0 && <Link href={`/${role}/payments`} className="box mb-4 flex items-center justify-between border-brand/50 bg-brand/5 text-sm"><span><b>{payDue.length} payment reminder{payDue.length > 1 ? 's' : ''}</b>{payDue.some((x) => x.due < iso(0)) && <span className="text-red-500"> · {payDue.filter((x) => x.due < iso(0)).length} overdue</span>}</span><span className="font-medium text-brand">View payments →</span></Link>}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">{stats.map((s) => <div key={s.k} className="box">
-        <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand/10 text-brand"><s.i size={18} /></span>
+        <span className="grid h-9 w-9 place-items-center rounded-full bg-brand/10 text-brand"><s.i size={18} /></span>
         <p className="mt-3 text-sm text-mute">{s.k}</p><p className="text-2xl font-semibold">{s.v}</p></div>)}</div>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="box"><p className="mb-3 font-medium">Due today <span className="text-sm font-normal text-mute">({dueToday.length + overdue.length})</span></p>

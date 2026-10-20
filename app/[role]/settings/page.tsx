@@ -32,6 +32,6 @@ export default function SettingsPage() {
             <td><button aria-label="Delete" onClick={() => delProduct(p.id)}><Trash2 size={16} className="text-mute" /></button></td></tr>)}</tbody></table></div>
       </div>
       <div className="box mt-4"><p className="mb-3 font-medium">Team</p>
-        <ul className="grid gap-2">{TEAM.map(([n, e, r]) => <li key={e} className="flex items-center justify-between rounded-xl border border-line px-3 py-2 text-sm"><span className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full bg-brand/10 text-xs font-semibold text-brand">{n[0]}</span><span>{n}<span className="block text-xs text-mute">{e}</span></span></span><span className="pill bg-brand/10 text-brand">{r}</span></li>)}</ul></div>
+        <ul className="grid gap-2">{TEAM.map(([n, e, r]) => <li key={e} className="flex items-center justify-between rounded-full border border-line px-3 py-2 text-sm"><span className="flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full bg-brand/10 text-xs font-semibold text-brand">{n[0]}</span><span>{n}<span className="block text-xs text-mute">{e}</span></span></span><span className="pill bg-brand/10 text-brand">{r}</span></li>)}</ul></div>
     </Shell>)
 }

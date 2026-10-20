@@ -19,7 +19,7 @@ export default function Pipeline() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-semibold">Pipeline</h1><p className="text-sm text-mute">Drag cards between tiles, or use the menu on a card. Closed and Cancelled ask for a note.</p></div><NewDeal role={role} /></div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{COLS.map((c, i) => { const col = mine.filter((d) => colOf(d) === i); const tone = i === 4 ? 'border-green-600/50' : i === 5 ? 'border-red-500/50' : 'border-line'
         return <div key={c.name} onDragOver={(e) => { e.preventDefault(); setOver(i) }} onDragLeave={() => setOver(null)} onDrop={() => { if (drag) stageTo(drag, c.stage, c.out); setDrag(null); setOver(null) }}
-          className={`scroll-y min-h-[220px] max-h-[60vh] overflow-y-auto rounded-2xl border p-3 ${over === i ? 'border-brand bg-brand/5' : `${tone} bg-card/50`}`}>
+          className={`scroll-y min-h-[220px] max-h-[60vh] overflow-y-auto rounded-[1.75rem] border p-3 ${over === i ? 'border-brand bg-brand/5' : `${tone} glass-soft`}`}>
           <p className="mb-3 flex justify-between text-sm font-medium"><span className={i === 4 ? 'text-green-600' : i === 5 ? 'text-red-500' : ''}>{c.name}</span><span className="pill bg-brand/10 text-brand">{col.length}</span></p>
           <div className="grid gap-3">{col.length === 0 && <p className="py-6 text-center text-xs text-mute">Drop a deal here</p>}{col.map((d) => {
             return <div key={d.id} draggable onDragStart={() => setDrag(d.id)} onDragEnd={() => { setDrag(null); setOver(null) }} className={`box cursor-grab p-3 active:cursor-grabbing ${i >= 4 ? `border-l-4 ${i === 5 ? 'border-l-red-500' : 'border-l-green-600'}` : ''}`}>

@@ -11,8 +11,8 @@ export default function NewDeal({ role }: { role: Role }) {
   const save = () => { const id = addDeal({ company: f.company, client: f.client, gst: f.gst, target: f.target, risk: f.risk, rep: role === 'rep' ? myName || '' : f.rep || reps[0]?.name || '', notes: '' }); toast('Deal created'); setOpen(false); r.push(`/${role}/deals/${id}`) }
   return (<>
     <button className="btn flex items-center gap-1" onClick={() => setOpen(true)}><Plus size={16} />New deal</button>
-    {open && <div className="fixed inset-0 z-50 grid place-items-end bg-black/50 p-0 md:place-items-center md:p-4" onClick={() => setOpen(false)}>
-      <div role="dialog" aria-label="New deal" className="w-full max-w-md rounded-t-2xl bg-card p-5 shadow-lg md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+    {open && <div className="fixed inset-0 z-50 grid place-items-end bg-[#1a1030]/30 backdrop-blur-md p-0 md:place-items-center md:p-4" onClick={() => setOpen(false)}>
+      <div role="dialog" aria-label="New deal" className="w-full max-w-md rounded-t-[2rem] glass-dialog p-6 md:rounded-[2rem]" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-center justify-between"><p className="text-lg font-semibold">New deal</p><button aria-label="Close" onClick={() => setOpen(false)}><X size={18} /></button></div>
         <div className="grid gap-3">
           <input autoFocus className="inp" placeholder="Company name" value={f.company} onChange={(e) => setF({ ...f, company: e.target.value })} />

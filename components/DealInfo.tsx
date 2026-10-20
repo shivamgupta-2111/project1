@@ -26,15 +26,15 @@ export default function DealInfo({ dealId }: { dealId: string }) {
           <p className="mb-3 font-medium">Contact details</p>
           <div className="grid gap-2 md:grid-cols-3"><input className="inp" placeholder="Name" value={c.name} onChange={(e) => setC({ ...c, name: e.target.value })} /><input className="inp" placeholder="Phone" value={c.phone} onChange={(e) => setC({ ...c, phone: e.target.value })} /><input className="inp" placeholder="Email" value={c.email} onChange={(e) => setC({ ...c, email: e.target.value })} /></div>
           <button className="btn mt-2" disabled={!c.name.trim()} onClick={() => { addContact({ ...c, dealId }); setC({ name: '', phone: '', email: '' }) }}>Add contact</button>
-          <ul className="mt-3 grid scroll-y max-h-44 gap-2 overflow-y-auto pr-1">{cs.map((x) => <li key={x.id} className="flex items-center justify-between rounded-xl border border-line px-3 py-2 text-sm"><span className="flex items-center gap-3"><Avatar name={x.name} size={32} /><span><b>{x.name}</b><span className="block text-xs text-mute">{x.phone} {x.email}</span></span></span>
+          <ul className="mt-3 grid scroll-y max-h-44 gap-2 overflow-y-auto pr-1">{cs.map((x) => <li key={x.id} className="flex items-center justify-between rounded-full border border-line px-3 py-2 text-sm"><span className="flex items-center gap-3"><Avatar name={x.name} size={32} /><span><b>{x.name}</b><span className="block text-xs text-mute">{x.phone} {x.email}</span></span></span>
             <span className="flex items-center gap-3">{x.phone && <a aria-label="Call" href={`tel:${x.phone}`}><Phone size={16} className="text-brand" /></a>}{x.email && <a aria-label="Email" href={`mailto:${x.email}`}><Mail size={16} className="text-brand" /></a>}<button aria-label="Remove" onClick={() => delContact(x.id)}><Trash2 size={16} className="text-mute" /></button></span></li>)}</ul>
         </div>
         <div className="box">
           <p className="mb-3 font-medium">Files</p>
           <label onDragOver={(e) => { e.preventDefault(); setOver(true) }} onDragLeave={() => setOver(false)} onDrop={(e) => { e.preventDefault(); setOver(false); pick(e.dataTransfer.files) }}
-            className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border-2 border-dashed p-5 text-sm text-mute ${over ? 'border-brand bg-brand/10' : 'border-line'}`}>
+            className={`flex cursor-pointer flex-col items-center gap-1 rounded-full border-2 border-dashed p-5 text-sm text-mute ${over ? 'border-brand bg-brand/10' : 'border-line'}`}>
             <Upload size={20} className="text-brand" />Drop files here or tap to choose<input type="file" multiple hidden onChange={(e) => pick(e.target.files)} /></label>
-          <ul className="mt-3 grid scroll-y max-h-44 gap-2 overflow-y-auto pr-1">{fs.map((f) => <li key={f.id} className="flex justify-between rounded-xl border border-line px-3 py-2 text-sm"><span>{f.name} <span className="text-xs text-mute">{Math.max(1, Math.round(f.size / 1024))} KB</span></span><button aria-label="Remove" onClick={() => delFile(f.id)}><Trash2 size={16} className="text-mute" /></button></li>)}</ul>
+          <ul className="mt-3 grid scroll-y max-h-44 gap-2 overflow-y-auto pr-1">{fs.map((f) => <li key={f.id} className="flex justify-between rounded-full border border-line px-3 py-2 text-sm"><span>{f.name} <span className="text-xs text-mute">{Math.max(1, Math.round(f.size / 1024))} KB</span></span><button aria-label="Remove" onClick={() => delFile(f.id)}><Trash2 size={16} className="text-mute" /></button></li>)}</ul>
           <p className="mt-2 text-xs text-mute">Demo: file names are saved, the files themselves are not uploaded.</p>
         </div>
       </div>
