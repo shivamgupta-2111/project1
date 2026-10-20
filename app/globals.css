@@ -1,0 +1,16 @@
+@tailwind base;@tailwind components;@tailwind utilities;
+/* Brand palette: orange #e87722 / dark #d45f1a, light-bg #f7f7f5, dark-bg #0a0f1a, dark-card #1a1a2e */
+:root{--bg:247 247 245;--card:255 255 255;--line:232 232 230;--ink:26 26 46;--mute:110 110 115;--brand:232 119 34}
+.dark{--bg:10 15 26;--card:26 26 46;--line:44 48 66;--ink:255 255 255;--mute:140 144 156;--brand:232 119 34}
+body{@apply bg-bg text-ink antialiased;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+.inp{@apply w-full rounded-xl border border-line bg-card px-3 py-2.5 text-sm outline-none transition focus:border-brand focus:ring-2 focus:ring-brand/25 disabled:opacity-60}
+.btn{@apply rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-dark disabled:opacity-40}
+.btn2{@apply rounded-xl border border-line bg-card px-3 py-2.5 text-sm transition hover:bg-brand/10 hover:text-brand}
+.box{@apply rounded-2xl border border-line bg-card/90 p-5 shadow-sm backdrop-blur}
+.pill{@apply rounded-full px-2.5 py-0.5 text-xs font-medium}
+.print-only{display:none}
+@media print{body *{visibility:hidden}.print-only,.print-only *{visibility:visible}.print-only{display:block;position:absolute;left:0;top:0;width:100%;background:#fff}}
+@media print{.print-area,.print-area *{visibility:visible}.print-area{position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;box-shadow:none;border:0}}
+.scroll-y{scrollbar-width:thin;scrollbar-color:rgb(var(--brand)) rgb(var(--line))}
+.scroll-y::-webkit-scrollbar{width:8px}.scroll-y::-webkit-scrollbar-track{background:rgb(var(--line));border-radius:8px}.scroll-y::-webkit-scrollbar-thumb{background:rgb(var(--brand));border-radius:8px}
+label.grid{align-content:start}
