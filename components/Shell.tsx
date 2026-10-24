@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, CheckSquare, Sun, Moon, LogOut, Kanban, Users, ListChecks, BarChart3, Settings as Cog, UserPlus, TrendingUp, Receipt, CalendarClock } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Sun, Moon, LogOut, Kanban, Users, ListChecks, BarChart3, Settings as Cog, UserPlus, TrendingUp, Receipt, CalendarClock, Layers, History } from 'lucide-react'
 import { useStore, Role } from '@/lib/store'
 import Bell from '@/components/Bell'
 import Avatar from '@/components/Avatar'
@@ -27,11 +27,11 @@ export default function Shell({ role, children, wide }: { role: Role; children: 
     Tasks: tasks.filter((t) => !t.done && t.due <= today && (adm || t.rep === name)).length,
     Invoices: invoices.filter((i) => i.status === 'Unpaid' && mineDeal(i.dealId)).length + (role === 'admin' ? quotes.filter((q) => q.final && !invoices.some((i) => i.quoteId === q.id)).length : 0) }
   const nav = [
-    { href: `/${role}`, label: 'Dashboard', icon: LayoutDashboard }, { href: `/${role}/pipeline`, label: 'Pipeline', icon: Kanban },
+    { href: `/${role}`, label: 'Dashboard', icon: LayoutDashboard }, { href: `/${role}/pipeline`, label: 'Pipeline', icon: Kanban }, { href: `/${role}/stages`, label: 'Stages', icon: Layers },
     { href: `/${role}/clients`, label: 'Clients', icon: Users }, { href: `/${role}/tasks`, label: 'Tasks', icon: ListChecks },
     ...(adm ? [{ href: `/${role}/team`, label: 'Team', icon: UserPlus }, { href: `/${role}/reports`, label: 'Reports', icon: BarChart3 }] : [{ href: `/${role}/profile`, label: 'My progress', icon: TrendingUp }]),
     { href: `/${role}/invoices`, label: 'Invoices', icon: Receipt }, { href: `/${role}/payments`, label: 'Payments', icon: CalendarClock },
-    ...(adm ? [{ href: `/${role}/approvals`, label: 'Approvals', icon: CheckSquare }, { href: `/${role}/settings`, label: 'Settings', icon: Cog }] : [])]
+    ...(adm ? [{ href: `/${role}/approvals`, label: 'Approvals', icon: CheckSquare }, { href: `/${role}/audit`, label: 'Audit log', icon: History }, { href: `/${role}/settings`, label: 'Settings', icon: Cog }] : [])]
   return (
     <div className="min-h-screen md:flex md:gap-0">
       <aside className="glass hidden w-64 shrink-0 sticky top-3 m-3 mr-0 h-[calc(100vh-1.5rem)] scroll-y flex-col self-start overflow-y-auto rounded-[2.25rem] p-4 md:flex">

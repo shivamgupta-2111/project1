@@ -5,8 +5,8 @@ export type Billing = 'One-time' | 'Monthly' | 'Annual'
 export type Item = { id: string; product: string; qty: number; list: number; price: number; gst: number; billing?: Billing; term?: number }
 export type QStatus = 'Draft' | 'Pending approval' | 'Approved' | 'Rejected' | 'Sent' | 'Accepted'
 export type Quote = { id: string; dealId: string; version: number; status: QStatus; items: Item[]; reason?: string; need?: 'admin' | 'ceo'; log: string[]; expires: string; final?: boolean; startDate?: string }
-export type Deal = { id: string; company: string; client: string; rep: string; stage: number; risk: 'Low' | 'Medium' | 'High'; gst: string; target: string; notes: string; amount?: number; outcome?: 'Won' | 'Cancelled'; closeNote?: string; closedAt?: string }
-export type Act = { id: string; dealId: string; text: string; at: string }
+export type Deal = { id: string; company: string; client: string; rep: string; stage: number; risk: 'Low' | 'Medium' | 'High'; gst: string; target: string; notes: string; amount?: number; outcome?: 'Won' | 'Cancelled'; lostReason?: string; closeNote?: string; closedAt?: string }
+export type Act = { id: string; dealId: string; text: string; at: string; by?: string; byRole?: Role }
 export type Rec = { id: string; dealId: string; type: 'Call' | 'Meeting' | 'Email' | 'Note'; text: string; at: string; by: string }
 export type Social = { id: string; dealId: string; platform: string; handle: string }
 export const PLATFORMS = ['LinkedIn', 'Instagram', 'Facebook', 'X (Twitter)', 'YouTube', 'WhatsApp', 'Website']
@@ -22,6 +22,7 @@ export type Task = { id: string; dealId: string; title: string; due: string; don
 export type Product = { id: string; name: string; list: number; min: number; billing?: Billing }
 export type Settings = { auto: number; admin: number; remindDays?: number }
 export const STAGES = ['Discover', 'Identify', 'Next', 'Proposal', 'Closed']
+export const LOST_REASONS = ['Price too high', 'Chose a competitor', 'Budget frozen', 'Bad timing', 'No response', 'Product mismatch', 'Other']
 const mult = (i: Item) => (i.billing === 'Monthly' ? i.term ?? 12 : i.billing === 'Annual' ? (i.term ?? 12) / 12 : 1)
 export const lineAmt = (i: Item) => i.price * i.qty * mult(i)
 export const arrOf = (q: Quote) => q.items.reduce((s, i) => s + (i.billing === 'Monthly' ? i.price * i.qty * 12 : i.billing === 'Annual' ? i.price * i.qty : 0), 0)
@@ -53,7 +54,7 @@ export const payPlan = (dealId: string, quoteId: string, items: Item[], start: s
 const it = (p: string, q: number, l: number, pr: number, billing: Billing = 'One-time', term = 1): Item => ({ id: Math.random().toString(36).slice(2), product: p, qty: q, list: l, price: pr, gst: 18, billing, term })
 type S = {
   payments: Payment[]; markPaid: (id: string, paid: boolean) => void; checkReminders: () => void
-  loadSession: () => void; closeDeal: (id: string, outcome: 'Won' | 'Cancelled', note: string) => void
+  loadSession: () => void; closeDeal: (id: string, outcome: 'Won' | 'Cancelled', note: string, reason?: string) => void; logAct: (dealId: string, text: string) => void
   users: User[]; meId: string | null; invoices: Invoice[]
   login: (email: string, pw: string) => User | null; addUser: (u: Omit<User, 'id' | 'role'>) => string | null; updateUser: (id: string, p: Partial<User>) => void
   markFinal: (quoteId: string) => void; createInvoice: (quoteId: string, by: string) => string; setInvoicePaid: (id: string, paid: boolean) => void
@@ -74,15 +75,16 @@ type S = {
   setStatus: (id: string, s: QStatus) => void; setStage: (id: string, s: number) => void
 }
 export const useStore = create<S>()(persist((set, get) => {
-  const log = (dealId: string, text: string) => set({ activity: [{ id: uid(), dealId, text, at: new Date().toISOString() }, ...get().activity] })
+  const log = (dealId: string, text: string) => { const u = get().users.find((x) => x.id === get().meId); set({ activity: [{ id: uid(), dealId, text, at: new Date().toISOString(), by: u?.name ?? 'System', byRole: u?.role }, ...get().activity] }) }
   const dealOf = (qid: string) => get().quotes.find((q) => q.id === qid)?.dealId || ''
   const notify = (to: Role[], text: string, href: string) => set({ notifs: [...to.map((r) => ({ id: uid(), to: r, text, href, read: false, at: new Date().toISOString() })), ...get().notifs] })
   return {
   addDeal: (d) => { const id = 'D-' + (get().deals.length + 1); set({ deals: [{ ...d, id, stage: 0 }, ...get().deals] }); log(id, 'Deal created'); return id },
   loadSession: () => { try { const v = JSON.parse(sessionStorage.getItem('crm-session') || 'null'); set({ role: v?.role ?? null, meId: v?.meId ?? null }) } catch { set({ role: null, meId: null }) } },
-  closeDeal: (id, outcome, note) => { const d = get().deals.find((x) => x.id === id)!; const amt = outcome === 'Won' ? dealValue(get().quotes, id) : undefined
-    set({ deals: get().deals.map((x) => (x.id === id ? { ...x, stage: 4, outcome, closeNote: note, closedAt: day(0), amount: amt } : x)) })
-    log(id, outcome === 'Won' ? `Deal closed as won: ${note}` : `Deal cancelled: ${note}`); notify(['admin', 'ceo'], `${d.company} ${outcome === 'Won' ? 'closed (won)' : 'cancelled'}: ${note.slice(0, 60)}`, `deals/${id}`) },
+  logAct: (dealId, text) => log(dealId, text),
+  closeDeal: (id, outcome, note, reason) => { const d = get().deals.find((x) => x.id === id)!; const amt = outcome === 'Won' ? dealValue(get().quotes, id) : undefined
+    set({ deals: get().deals.map((x) => (x.id === id ? { ...x, stage: 4, outcome, closeNote: note, closedAt: day(0), amount: amt, lostReason: outcome === 'Cancelled' ? reason : undefined } : x)) })
+    log(id, outcome === 'Won' ? `Deal closed as won: ${note}` : `Deal cancelled (${reason || 'no reason'}): ${note}`); notify(['admin', 'ceo'], `${d.company} ${outcome === 'Won' ? 'closed (won)' : `cancelled (${reason || 'no reason'})`}: ${note.slice(0, 60)}`, `deals/${id}`) },
   users: [
     { id: 'u1', name: 'Anita', email: 'anita@demo.com', password: 'demo123', role: 'rep', phone: '98765 43210', city: 'Mumbai', target: 500000 },
     { id: 'u2', name: 'Vikram', email: 'vikram@demo.com', password: 'demo123', role: 'rep', phone: '98220 11223', city: 'Pune', target: 600000 },
@@ -91,16 +93,16 @@ export const useStore = create<S>()(persist((set, get) => {
   meId: null,
   invoices: [{ id: 'INV-001', dealId: 'D-4', quoteId: 'Q-004', subtotal: 12000, gst: 2160, amount: 14160, date: day(-5), due: day(10), status: 'Unpaid', by: 'Admin' }],
   login: (email, pw) => { const u = get().users.find((x) => x.email.toLowerCase() === email && x.password === pw); if (u) { try { sessionStorage.setItem('crm-session', JSON.stringify({ role: u.role, meId: u.id })) } catch {} set({ role: u.role, meId: u.id }) } return u || null },
-  addUser: (u) => { if (get().users.some((x) => x.email.toLowerCase() === u.email.toLowerCase())) return 'This email is already in use.'; set({ users: [...get().users, { ...u, id: uid(), role: 'rep' }] }); return null },
+  addUser: (u) => { if (get().users.some((x) => x.email.toLowerCase() === u.email.toLowerCase())) return 'This email is already in use.'; set({ users: [...get().users, { ...u, id: uid(), role: 'rep' }] }); log('', `Rep account created: ${u.name} (${u.email})`); return null },
   updateUser: (id, p) => set({ users: get().users.map((x) => (x.id === id ? { ...x, ...p } : x)) }),
   markFinal: (id) => { const q = get().quotes.find((x) => x.id === id)!; const amt = total(q); const dl = get().deals.find((d) => d.id === q.dealId)
-    set({ quotes: get().quotes.map((x) => (x.dealId !== q.dealId ? x : x.id === id ? { ...x, final: true, status: 'Accepted' as QStatus, log: [...x.log, 'Marked as final'] } : { ...x, final: false, status: x.status === 'Accepted' ? ('Sent' as QStatus) : x.status })), deals: get().deals.map((d) => (d.id === q.dealId ? { ...d, amount: amt, stage: 4, outcome: 'Won' as const, closeNote: `Quote ${id} marked final`, closedAt: day(0) } : d)) })
+    set({ quotes: get().quotes.map((x) => (x.dealId !== q.dealId ? x : x.id === id ? { ...x, final: true, status: 'Accepted' as QStatus, log: [...x.log, 'Marked as final'] } : { ...x, final: false, status: x.status === 'Accepted' ? ('Sent' as QStatus) : x.status })), deals: get().deals.map((d) => (d.id === q.dealId ? { ...d, amount: amt, stage: 4, outcome: 'Won' as const, lostReason: undefined, closeNote: `Quote ${id} marked final`, closedAt: day(0) } : d)) })
     set({ payments: [...get().payments.filter((p) => p.dealId !== q.dealId), ...payPlan(q.dealId, id, q.items, q.startDate || day(0))] })
     log(q.dealId, `Quote ${id} marked final · deal amount ₹${Math.round(amt).toLocaleString('en-IN')}`); notify(['admin', 'ceo'], `${id} for ${dl?.company} is final (₹${Math.round(amt).toLocaleString('en-IN')}). Invoice can be created.`, `deals/${q.dealId}`) },
   createInvoice: (qid, by) => { const q = get().quotes.find((x) => x.id === qid)!; const sub = q.items.reduce((s, i) => s + lineAmt(i), 0); const amount = total(q); const id = 'INV-' + String(get().invoices.length + 1).padStart(3, '0'); const dl = get().deals.find((d) => d.id === q.dealId)
     set({ invoices: [{ id, dealId: q.dealId, quoteId: qid, subtotal: sub, gst: amount - sub, amount, date: day(0), due: day(15), status: 'Unpaid', by }, ...get().invoices] })
     log(q.dealId, `Invoice ${id} created`); notify(['rep'], `Invoice ${id} created for ${dl?.company}`, `invoices/${id}`); return id },
-  setInvoicePaid: (id, paid) => set({ invoices: get().invoices.map((i) => (i.id === id ? { ...i, status: paid ? 'Paid' : 'Unpaid' } : i)) }),
+  setInvoicePaid: (id, paid) => { const inv = get().invoices.find((i) => i.id === id); set({ invoices: get().invoices.map((i) => (i.id === id ? { ...i, status: paid ? 'Paid' : 'Unpaid' } : i)) }); if (inv) log(inv.dealId, `Invoice ${id} marked ${paid ? 'paid' : 'unpaid'}`) },
   tasks: [
     { id: 't1', dealId: 'D-2', title: 'Call Neha about bulk discount', due: day(0), done: false, rep: 'Anita' },
     { id: 't2', dealId: 'D-3', title: 'Send revised quote to Crest', due: day(-1), done: false, rep: 'Vikram' },
@@ -128,7 +130,7 @@ export const useStore = create<S>()(persist((set, get) => {
   updateProduct: (id, p) => set({ products: get().products.map((x) => (x.id === id ? { ...x, ...p } : x)) }),
   delProduct: (id) => set({ products: get().products.filter((x) => x.id !== id) }),
   contacts: [{ id: 'c1', dealId: 'D-10', name: 'Dr. Kavita Sen', phone: '98765 00011', email: 'kavita@jupiterhealth.example' }, { id: 'c2', dealId: 'D-11', name: 'Anand Kiran', phone: '98220 55667', email: 'anand@kirancloud.example' }], files: [],
-  updateDeal: (id, p) => set({ deals: get().deals.map((d) => (d.id === id ? { ...d, ...p } : d)) }),
+  updateDeal: (id, p) => { const old = get().deals.find((d) => d.id === id); set({ deals: get().deals.map((d) => (d.id === id ? { ...d, ...p } : d)) }); if (old && p.risk && p.risk !== old.risk) log(id, `Risk changed ${old.risk} → ${p.risk}`) },
   addContact: (c) => { set({ contacts: [...get().contacts, { ...c, id: uid() }] }); log(c.dealId, `Contact ${c.name} added`) },
   delContact: (id) => set({ contacts: get().contacts.filter((x) => x.id !== id) }),
   addFiles: (dealId, f) => { set({ files: [...get().files, ...f.map((x) => ({ ...x, dealId, id: uid() }))] }); log(dealId, `${f.length} file(s) uploaded`) },
@@ -156,7 +158,7 @@ export const useStore = create<S>()(persist((set, get) => {
     { id: 'D-6', company: 'Fusion Textiles', client: 'Priya Nair', rep: 'Vikram', stage: 2, risk: 'Low', gst: '33FFFFF5555F1Z8', target: '2026-12-05', notes: 'Demo done, waiting for budget.' },
     { id: 'D-7', company: 'Grid Energy', client: 'Arjun Das', rep: 'Vikram', stage: 0, risk: 'Medium', gst: '19GGGGG6666G1Z4', target: '2027-01-15', notes: '' },
     { id: 'D-8', company: 'Horizon Edu', client: 'Meera Iyer', rep: 'Anita', stage: 0, risk: 'Low', gst: '29HHHHH7777H1Z6', target: '2027-01-30', notes: '' },
-    { id: 'D-9', company: 'Indigo Print Works', client: 'Rohit Jain', rep: 'Vikram', stage: 4, risk: 'High', gst: '27IIIII8888I1Z1', target: '2026-10-05', notes: '', outcome: 'Cancelled', closeNote: 'Budget frozen. Revisit next quarter.', closedAt: '2026-10-12' },
+    { id: 'D-9', company: 'Indigo Print Works', client: 'Rohit Jain', rep: 'Vikram', stage: 4, risk: 'High', gst: '27IIIII8888I1Z1', target: '2026-10-05', notes: '', outcome: 'Cancelled', lostReason: 'Budget frozen', closeNote: 'Budget frozen. Revisit next quarter.', closedAt: '2026-10-12' },
     { id: 'D-10', company: 'Jupiter Health', client: 'Dr. Kavita Sen', rep: 'Vikram', stage: 4, risk: 'Low', gst: '27JJJJJ9999J1Z0', target: '2026-10-15', notes: '', amount: 212400, outcome: 'Won', closeNote: '12-month subscription signed.', closedAt: '2026-10-15' },
     { id: 'D-11', company: 'Kiran Cloud Services', client: 'Anand Kiran', rep: 'Anita', stage: 4, risk: 'Low', gst: '29KKKKK1212K1Z5', target: '2026-10-01', notes: '', amount: 141600, outcome: 'Won', closeNote: '2-year hosting contract, billed yearly.', closedAt: '2026-10-01' },
   ],
@@ -183,5 +185,5 @@ export const useStore = create<S>()(persist((set, get) => {
     return { ...q, status: 'Pending approval', need: n, reason, log: [...q.log, `Approval requested (${discountPct(q).toFixed(1)}% off): ${reason}`] } }) }) },
   decide: (id, by, ok, comment) => { log(dealOf(id), `Quote ${id} ${ok ? 'approved' : 'rejected'} by ${by}`); notify(['rep'], `${id} was ${ok ? 'approved' : 'rejected'} by ${by}${comment ? ': ' + comment : ''}`, `deals/${dealOf(id)}`); set({ quotes: get().quotes.map((q) => q.id === id ? { ...q, status: ok ? 'Approved' : 'Rejected', log: [...q.log, `${ok ? 'Approved' : 'Rejected'} by ${by}${comment ? ': ' + comment : ''}`] } : q) }) },
   setStatus: (id, s) => { log(dealOf(id), `Quote ${id} marked ${s}`); set({ quotes: get().quotes.map((q) => (q.id === id ? { ...q, status: s, log: [...q.log, s] } : q)) }) },
-  setStage: (id, s) => { set({ deals: get().deals.map((d) => (d.id === id ? { ...d, stage: s, ...(s < 4 ? { outcome: undefined, closeNote: undefined, closedAt: undefined } : {}) } : d)) }); log(id, `Stage changed to ${STAGES[s]}`) },
+  setStage: (id, s) => { set({ deals: get().deals.map((d) => (d.id === id ? { ...d, stage: s, ...(s < 4 ? { outcome: undefined, lostReason: undefined, closeNote: undefined, closedAt: undefined } : {}) } : d)) }); log(id, `Stage changed to ${STAGES[s]}`) },
 } }, { name: 'crm-store', partialize: (s) => { const { role, meId, ...rest } = s; return rest } }))

@@ -30,3 +30,11 @@ Mark a quote Final → payment schedule is created (Monthly: one per month for t
 Opening a deal or rep adds a numbered tab under the header. Click a tab to switch, double-click or the pencil to rename, X to close, Alt+1..9 to jump. Esc cancels a rename, closes pop-ups and the alert list, and clears search boxes.
 ## Payment reminders
 Mark a quote with a Monthly or Annual product as Final: a payment schedule is created. Reminders start N days before each due date (Settings). See Dashboard, Payments page and the bell.
+## Stages page
+Sidebar → Stages. Tap a stage tile to list the clients in it. Reps see their own deals; Admin/CEO see all and can filter by rep.
+## Message templates
+Deal page → Message templates. Pick a template and contact, edit the text, then open it in WhatsApp or your email app. Needs a contact with a phone/email (Contact details). Each use is written to the audit log.
+## Lost reasons
+Cancelling a deal now requires a reason (dropdown) plus the note. Shown on the dashboard Churn box and in Reports (Admin/CEO): reasons by count and value, by rep, lost-deals table, CSV export.
+## Audit log
+Admin/CEO → Audit log. Every action records who did it and when. Filter by user, category, date or text, and export CSV.

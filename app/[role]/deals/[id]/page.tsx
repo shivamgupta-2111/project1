@@ -8,6 +8,7 @@ import { toast } from '@/components/Toaster'
 import { stageTo } from '@/components/CloseDialog'
 import DealTabs from '@/components/DealTabs'
 import DealInfo from '@/components/DealInfo'
+import Templates from '@/components/Templates'
 import Num from '@/components/Num'
 import { useStore, Role, Quote, STAGES, discountPct, needOf, total, lineAmt, arrOf, Billing, payPlan, origAmt, lineDiscPct, origTotal, subTotal, discAmt } from '@/lib/store'
 const inr = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN')
@@ -15,6 +16,7 @@ const per = (b?: Billing) => (b === 'Monthly' ? '/mo' : b === 'Annual' ? '/yr' :
 export default function Deal() {
   const { role: r, id } = useParams() as { role: Role; id: string }
   const { deals, quotes, addQuote, saveQuote, submit, setStatus, setStage, products, settings, markFinal, invoices, createInvoice, payments } = useStore()
+  const meName = useStore((s) => s.users.find((u) => u.id === s.meId)?.name)
   const d = deals.find((x) => x.id === id); const qs = quotes.filter((q) => q.dealId === id)
   const [sel, setSel] = useState<string | null>(null); const [reason, setReason] = useState('')
   const q = qs.find((x) => x.id === sel) || qs[0]
@@ -42,6 +44,7 @@ export default function Deal() {
         {inv ? <Link href={`/${r}/invoices/${inv.id}`} className="btn2">View invoice {inv.id}</Link> : r === 'admin' ? <button className="btn" onClick={() => { const id = createInvoice(finalQ.id, 'Admin'); toast(`Invoice ${id} created`) }}>Create invoice</button> : <span className="text-sm text-mute">Waiting for Admin to create the invoice</span>}</div>}
       <DealInfo dealId={d.id} />
       <DealTabs dealId={d.id} who={r === 'rep' ? d.rep : r} />
+      <Templates dealId={d.id} who={meName ?? (r === 'rep' ? d.rep : r)} />
       <div className="mb-2 mt-6 flex items-center justify-between"><h2 className="font-medium">Quotations</h2><button className="btn" onClick={() => { setSel(addQuote(d.id)); toast('New quote created') }}>New quote</button></div>
       <div className="mb-3 flex gap-2 overflow-x-auto">{qs.map((x) => <button key={x.id} onClick={() => setSel(x.id)} className={`btn2 whitespace-nowrap ${q?.id === x.id ? 'border-brand' : ''}`}>{x.id} v{x.version} · {x.status}</button>)}</div>
       {!q ? <p className="box text-sm text-mute">No quotes yet. Create the first one.</p> : (
