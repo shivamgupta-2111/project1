@@ -13,7 +13,7 @@ const NAME: Record<Role, string> = { rep: 'Anita Rao', admin: 'Admin', ceo: 'CEO
 export default function Shell({ role, children, wide }: { role: Role; children: React.ReactNode; wide?: boolean }) {
   const { role: me, setRole, quotes, invoices, tasks, deals, payments, settings } = useStore(); const { resolvedTheme, setTheme } = useTheme(); const path = usePathname(); const r = useRouter()
   const [ok, setOk] = useState(false); const name = useStore((s) => s.users.find((u) => u.id === s.meId)?.name) || NAME[role]; const photo = useStore((s) => s.users.find((u) => u.id === s.meId)?.photo)
-  useEffect(() => { useStore.getState().loadSession(); useStore.getState().checkReminders(); setOk(true); const f = (e: StorageEvent) => { if (e.key === 'crm-store') useStore.persist.rehydrate() }; window.addEventListener('storage', f); return () => window.removeEventListener('storage', f) }, [])
+  useEffect(() => { useStore.getState().loadSession(); useStore.getState().checkReminders(); setOk(true); const iv = setInterval(() => useStore.getState().checkReminders(), 5 * 60 * 1000); const f = (e: StorageEvent) => { if (e.key === 'crm-store') useStore.persist.rehydrate() }; window.addEventListener('storage', f); return () => { window.removeEventListener('storage', f); clearInterval(iv) } }, [])
   useEffect(() => { if (ok && me !== role) r.replace('/') }, [ok, me, role, r])
   const users = useStore((s) => s.users); const isTab = /\/(deals|team)\/[^/]+$/.test(path)
   useEffect(() => { if (!ok || me !== role) return; const t = useTabs.getState(); if (!isTab) { t.setMain(path); return }

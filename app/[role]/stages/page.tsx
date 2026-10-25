@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import Shell from '@/components/Shell'
 import Avatar from '@/components/Avatar'
+import RepLink from '@/components/RepLink'
 import { useStore, Role, Deal, dealValue } from '@/lib/store'
 const RISK = { Low: 'bg-green-500/15 text-green-600', Medium: 'bg-amber-500/15 text-amber-600', High: 'bg-red-500/15 text-red-500' }
 // Same 6 columns as the Pipeline page: Done and Cancelled are split out of "Closed"
@@ -38,13 +39,13 @@ export default function Stages() {
           <input className="inp !w-full md:!w-64" placeholder="Search client or company" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
         {list.length === 0 ? <p className="py-8 text-center text-sm text-mute">No clients in this stage.</p> :
-          <ul className="grid gap-2">{list.map((d) => <li key={d.id}>
-            <Link href={`/${role}/deals/${d.id}`} className="flex flex-wrap items-center gap-3 rounded-3xl border border-line p-3 transition hover:border-brand">
+          <ul className="grid gap-2">{list.map((d) => <li key={d.id} className="relative">
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line p-3 transition hover:border-brand">
               <Avatar name={d.company} size={38} />
-              <div className="min-w-0 flex-1"><p className="truncate font-medium">{d.company}</p><p className="text-xs text-mute">{d.client}{adm && ` · Rep: ${d.rep}`}</p></div>
+              <div className="min-w-0 flex-1"><p className="truncate font-medium"><Link href={`/${role}/deals/${d.id}`} className="after:absolute after:inset-0">{d.company}</Link></p><p className="text-xs text-mute">{d.client}{adm && <> · Rep: <RepLink name={d.rep} /></>}</p></div>
               <span className={`pill ${RISK[d.risk]}`}>{d.risk} risk</span>
               <div className="text-right"><p className="text-sm font-semibold">{inr(dealValue(quotes, d.id))}</p><p className="text-[11px] text-mute">{sel >= 4 ? `Closed ${d.closedAt ?? ''}` : `Target ${d.target}`}</p></div>
-            </Link></li>)}</ul>}
+            </div></li>)}</ul>}
       </div>
     </Shell>)
 }

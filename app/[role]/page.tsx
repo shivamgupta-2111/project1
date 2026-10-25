@@ -6,6 +6,7 @@ import QuickTask from '@/components/QuickTask'
 import { useParams } from 'next/navigation'
 import { Briefcase, IndianRupee, Clock, Trophy, Repeat } from 'lucide-react'
 import Shell from '@/components/Shell'
+import RepLink from '@/components/RepLink'
 import { useStore, Role, STAGES, dealValue, isWon, isLost, arrOf, Task } from '@/lib/store'
 const RISK = { Low: 'bg-green-500/15 text-green-600', Medium: 'bg-amber-500/15 text-amber-600', High: 'bg-red-500/15 text-red-500' }
 const MONTHS = [['May', 4.2], ['Jun', 5.8], ['Jul', 5.1], ['Aug', 7.4], ['Sep', 6.9], ['Oct', 9.2]] as [string, number][]
@@ -84,12 +85,12 @@ export default function Dash() {
           <thead className="text-xs text-mute"><tr><th className="pb-2 font-medium">Company</th><th className="font-medium">Rep</th><th className="font-medium">Stage</th><th className="font-medium">Amount</th><th className="font-medium">Risk</th><th className="font-medium">Target</th></tr></thead>
           <tbody>{rows.map((d) => <tr key={d.id} className="border-t border-line">
             <td className="py-3"><Link className="font-medium hover:text-brand" href={`/${role}/deals/${d.id}`}>{d.company}</Link><p className="text-xs text-mute">{d.client}</p></td>
-            <td>{d.rep}</td><td><span className={`pill ${d.stage === 4 ? (d.outcome === 'Cancelled' ? 'bg-red-500/15 text-red-500' : 'bg-green-500/15 text-green-600') : 'bg-brand/10 text-brand'}`}>{d.stage === 4 ? (d.outcome === 'Cancelled' ? 'Cancelled' : 'Won') : STAGES[d.stage]}</span></td>
+            <td><RepLink name={d.rep} /></td><td><span className={`pill ${d.stage === 4 ? (d.outcome === 'Cancelled' ? 'bg-red-500/15 text-red-500' : 'bg-green-500/15 text-green-600') : 'bg-brand/10 text-brand'}`}>{d.stage === 4 ? (d.outcome === 'Cancelled' ? 'Cancelled' : 'Won') : STAGES[d.stage]}</span></td>
             <td>{inr(dealValue(quotes, d.id))}</td><td><span className={`pill ${RISK[d.risk]}`}>{d.risk}</span></td><td className="text-mute">{d.target}</td></tr>)}</tbody></table>{rows.length === 0 && <p className="py-6 text-center text-sm text-mute">No deals match your search.</p>}</div>
       </div>
       <div className="box mt-4"><p className="mb-3 font-medium">Recent activity</p><ul className="grid gap-3">{recent.map((a) => <li key={a.id} className="flex justify-between gap-3 text-sm"><span><b>{deals.find((d) => d.id === a.dealId)?.company}</b> · {a.text}</span><span className="shrink-0 text-xs text-mute">{new Date(a.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</span></li>)}</ul></div>
       {role !== 'rep' && <div className="box mt-4"><p className="mb-3 font-medium">Rep leaderboard</p>
         <ul className="grid gap-3">{reps.sort((a, b) => b.v - a.v).map((x, i) => <li key={x.n} className="flex items-center justify-between text-sm">
-          <span className="flex items-center gap-3"><span className="grid h-7 w-7 place-items-center rounded-full bg-brand/10 text-xs font-semibold text-brand">{i + 1}</span>{x.n}<span className="text-mute">{x.c} deals</span></span><b>{inr(x.v)}</b></li>)}</ul></div>}
+          <span className="flex items-center gap-3"><span className="grid h-7 w-7 place-items-center rounded-full bg-brand/10 text-xs font-semibold text-brand">{i + 1}</span><RepLink name={x.n} /><span className="text-mute">{x.c} deals</span></span><b>{inr(x.v)}</b></li>)}</ul></div>}
     </Shell>)
 }

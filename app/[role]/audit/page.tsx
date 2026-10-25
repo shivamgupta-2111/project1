@@ -5,10 +5,11 @@ import { useState } from 'react'
 import { Download } from 'lucide-react'
 import Shell from '@/components/Shell'
 import { toast } from '@/components/Toaster'
+import RepLink from '@/components/RepLink'
 import { useStore, Role } from '@/lib/store'
 const CATS: [string, RegExp][] = [
   ['Approvals', /approved|rejected|Approval/i], ['Quotes', /^Quote /], ['Stages & closing', /Stage changed|Deal closed|Deal cancelled|Deal created/],
-  ['Invoices & payments', /Invoice|payment/i], ['Messages', /^(Email|WhatsApp) opened/], ['Tasks', /^Task/], ['Accounts', /account/i]]
+  ['Invoices & payments', /Invoice|payment/i], ['Messages', /^(Email|WhatsApp) opened/], ['Calls & meetings', /^(Call|Meeting|Email|Note) (logged|added)/], ['Follow-ups', /^Follow-up/], ['Tasks', /^Task/], ['Accounts', /account/i]]
 const catOf = (t: string) => CATS.find(([, re]) => re.test(t))?.[0] ?? 'Other'
 const fmt = (s: string) => new Date(s).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 const ROLE = { rep: 'bg-slate-500/15 text-slate-500', admin: 'bg-brand/15 text-brand', ceo: 'bg-green-600/15 text-green-600' }
@@ -39,7 +40,7 @@ export default function Audit() {
           <table className="w-full text-left text-sm"><thead className="text-xs text-mute"><tr><th className="py-2 pr-4">Time</th><th className="pr-4">User</th><th className="pr-4">Deal</th><th className="pr-4">Category</th><th>Action</th></tr></thead>
             <tbody>{rows.slice(0, n).map((a) => <tr key={a.id} className="border-t border-line align-top">
               <td className="whitespace-nowrap py-2 pr-4 text-xs text-mute">{fmt(a.at)}</td>
-              <td className="whitespace-nowrap pr-4">{a.by || 'System'} {a.byRole && <span className={`pill ml-1 !px-2 !py-0.5 uppercase ${ROLE[a.byRole]}`}>{a.byRole}</span>}</td>
+              <td className="whitespace-nowrap pr-4"><RepLink name={a.by || 'System'} /> {a.byRole && <span className={`pill ml-1 !px-2 !py-0.5 uppercase ${ROLE[a.byRole]}`}>{a.byRole}</span>}</td>
               <td className="pr-4">{co(a.dealId) ? <Link href={`/${role}/deals/${a.dealId}`} className="hover:text-brand">{co(a.dealId)}</Link> : <span className="text-mute">—</span>}</td>
               <td className="whitespace-nowrap pr-4 text-xs text-mute">{catOf(a.text)}</td><td>{a.text}</td></tr>)}</tbody></table>}
         {rows.length > n && <button className="btn2 mx-auto mt-3 block" onClick={() => setN(n + 50)}>Show more ({rows.length - n} left)</button>}

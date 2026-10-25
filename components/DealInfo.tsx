@@ -3,12 +3,13 @@ import { useState } from 'react'
 import { Trash2, Upload, Phone, Mail } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import Avatar from '@/components/Avatar'
+import { findDupes } from '@/lib/dupes'
 const GST = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/
 export default function DealInfo({ dealId }: { dealId: string }) {
   const { deals, contacts, files, updateDeal, addContact, delContact, addFiles, delFile } = useStore()
   const d = deals.find((x) => x.id === dealId)!; const cs = contacts.filter((c) => c.dealId === dealId); const fs = files.filter((f) => f.dealId === dealId)
   const [c, setC] = useState({ name: '', phone: '', email: '' }); const [over, setOver] = useState(false)
-  const gstOk = !d.gst || GST.test(d.gst.toUpperCase())
+  const gstOk = !d.gst || GST.test(d.gst.toUpperCase()); const gstDup = findDupes(deals.filter((x) => x.id !== d.id), { gst: d.gst })[0]
   const pick = (l: FileList | null) => l && l.length && addFiles(dealId, Array.from(l).map((f) => ({ name: f.name, size: f.size })))
   return (
     <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
@@ -18,7 +19,8 @@ export default function DealInfo({ dealId }: { dealId: string }) {
           <label className="grid gap-1 text-sm">Risk level<select className="inp" value={d.risk} onChange={(e) => updateDeal(d.id, { risk: e.target.value as 'Low' })}>{['Low', 'Medium', 'High'].map((r) => <option key={r}>{r}</option>)}</select></label>
           <label className="grid gap-1 text-sm">Target date<input type="date" className="inp" value={d.target} onChange={(e) => updateDeal(d.id, { target: e.target.value })} /></label></div>
         <label className="grid gap-1 text-sm">GST number<input className={`inp ${gstOk ? '' : 'border-red-500'}`} value={d.gst} maxLength={15} onChange={(e) => updateDeal(d.id, { gst: e.target.value.toUpperCase() })} />
-          {!gstOk && <span className="text-xs text-red-500">GST must be 15 characters, like 27AAAAA0000A1Z5</span>}</label>
+          {!gstOk && <span className="text-xs text-red-500">GST must be 15 characters, like 27AAAAA0000A1Z5</span>}
+          {gstDup && <span className="text-xs text-amber-600">Same GST number as {gstDup.deal.id} ({gstDup.deal.company}, owner {gstDup.deal.rep}). Possible duplicate.</span>}</label>
         <label className="grid gap-1 text-sm">Notes<textarea rows={3} className="inp" value={d.notes} onChange={(e) => updateDeal(d.id, { notes: e.target.value })} /></label>
       </div>
       <div className="grid gap-4">

@@ -7,18 +7,19 @@ export type QStatus = 'Draft' | 'Pending approval' | 'Approved' | 'Rejected' | '
 export type Quote = { id: string; dealId: string; version: number; status: QStatus; items: Item[]; reason?: string; need?: 'admin' | 'ceo'; log: string[]; expires: string; final?: boolean; startDate?: string }
 export type Deal = { id: string; company: string; client: string; rep: string; stage: number; risk: 'Low' | 'Medium' | 'High'; gst: string; target: string; notes: string; amount?: number; outcome?: 'Won' | 'Cancelled'; lostReason?: string; closeNote?: string; closedAt?: string }
 export type Act = { id: string; dealId: string; text: string; at: string; by?: string; byRole?: Role }
-export type Rec = { id: string; dealId: string; type: 'Call' | 'Meeting' | 'Email' | 'Note'; text: string; at: string; by: string }
+export type Rec = { id: string; dealId: string; type: 'Call' | 'Meeting' | 'Email' | 'Note'; text: string; at: string; by: string; contact?: string; outcome?: string; duration?: number; next?: string; nextDue?: string }
+export const OUTCOMES = ['Interested', 'Needs follow-up', 'Deal progressed', 'Not interested', 'No answer', 'Left voicemail']
 export type Social = { id: string; dealId: string; platform: string; handle: string }
 export const PLATFORMS = ['LinkedIn', 'Instagram', 'Facebook', 'X (Twitter)', 'YouTube', 'WhatsApp', 'Website']
 const day = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10)
 const uid = () => Math.random().toString(36).slice(2)
-export type Notif = { id: string; to: Role; text: string; href: string; read: boolean; at: string }
+export type Notif = { id: string; to: Role; text: string; href: string; read: boolean; at: string; user?: string }
 export type Contact = { id: string; dealId: string; name: string; phone: string; email: string }
 export type FileRec = { id: string; dealId: string; name: string; size: number }
 export type User = { id: string; name: string; email: string; password: string; role: Role; phone: string; city: string; target: number; photo?: string }
 export type Invoice = { id: string; dealId: string; quoteId: string; subtotal: number; gst: number; amount: number; date: string; due: string; status: 'Unpaid' | 'Paid'; by: string }
 export type Payment = { id: string; dealId: string; quoteId: string; kind: 'Monthly' | 'Annual'; n: number; of: number; due: string; amount: number; status: 'Due' | 'Paid'; notified?: boolean }
-export type Task = { id: string; dealId: string; title: string; due: string; done: boolean; rep: string }
+export type Task = { id: string; dealId: string; title: string; due: string; done: boolean; rep: string; kind?: 'followup'; notified?: boolean; remindRole?: Role; remindUser?: string }
 export type Product = { id: string; name: string; list: number; min: number; billing?: Billing }
 export type Settings = { auto: number; admin: number; remindDays?: number }
 export const STAGES = ['Discover', 'Identify', 'Next', 'Proposal', 'Closed']
@@ -59,15 +60,15 @@ type S = {
   login: (email: string, pw: string) => User | null; addUser: (u: Omit<User, 'id' | 'role'>) => string | null; updateUser: (id: string, p: Partial<User>) => void
   markFinal: (quoteId: string) => void; createInvoice: (quoteId: string, by: string) => string; setInvoicePaid: (id: string, paid: boolean) => void
   tasks: Task[]; settings: Settings; products: Product[]
-  addTask: (t: Omit<Task, 'id' | 'done'>) => void; toggleTask: (id: string) => void; delTask: (id: string) => void
+  addTask: (t: Omit<Task, 'id' | 'done'>) => void; addFollowUp: (dealId: string, due: string, note?: string) => void; snoozeTask: (id: string, days: number) => void; toggleTask: (id: string) => void; delTask: (id: string) => void
   setSettings: (p: Partial<Settings>) => void
   addProduct: () => void; updateProduct: (id: string, p: Partial<Product>) => void; delProduct: (id: string) => void
   addDeal: (d: Omit<Deal, 'id' | 'stage'>) => string
   contacts: Contact[]; files: FileRec[]; updateDeal: (id: string, p: Partial<Deal>) => void
   addContact: (c: Omit<Contact, 'id'>) => void; delContact: (id: string) => void; addFiles: (dealId: string, f: { name: string; size: number }[]) => void; delFile: (id: string) => void
-  notifs: Notif[]; markRead: (role: Role) => void
+  notifs: Notif[]; markRead: (role: Role, user?: string) => void
   activity: Act[]; records: Rec[]; socials: Social[]
-  addRecord: (dealId: string, type: Rec['type'], text: string, by: string) => void
+  addRecord: (dealId: string, type: Rec['type'], text: string, by: string, extra?: Partial<Pick<Rec, 'contact' | 'outcome' | 'duration' | 'next' | 'nextDue' | 'at'>>) => void
   addSocial: (dealId: string, platform: string, handle: string) => void; removeSocial: (id: string) => void
   role: Role | null; deals: Deal[]; quotes: Quote[]; setRole: (r: Role | null) => void
   addQuote: (dealId: string, from?: Quote) => string; saveQuote: (q: Quote) => void
@@ -77,7 +78,7 @@ type S = {
 export const useStore = create<S>()(persist((set, get) => {
   const log = (dealId: string, text: string) => { const u = get().users.find((x) => x.id === get().meId); set({ activity: [{ id: uid(), dealId, text, at: new Date().toISOString(), by: u?.name ?? 'System', byRole: u?.role }, ...get().activity] }) }
   const dealOf = (qid: string) => get().quotes.find((q) => q.id === qid)?.dealId || ''
-  const notify = (to: Role[], text: string, href: string) => set({ notifs: [...to.map((r) => ({ id: uid(), to: r, text, href, read: false, at: new Date().toISOString() })), ...get().notifs] })
+  const notify = (to: Role[], text: string, href: string, user?: string) => set({ notifs: [...to.map((r) => ({ id: uid(), to: r, text, href, read: false, at: new Date().toISOString(), user })), ...get().notifs] })
   return {
   addDeal: (d) => { const id = 'D-' + (get().deals.length + 1); set({ deals: [{ ...d, id, stage: 0 }, ...get().deals] }); log(id, 'Deal created'); return id },
   loadSession: () => { try { const v = JSON.parse(sessionStorage.getItem('crm-session') || 'null'); set({ role: v?.role ?? null, meId: v?.meId ?? null }) } catch { set({ role: null, meId: null }) } },
@@ -114,15 +115,25 @@ export const useStore = create<S>()(persist((set, get) => {
     ...payPlan('D-10', 'Q-008', [it('CRM Subscription', 15, 1000, 1000, 'Monthly', 12)], addM(day(4), -2)).map((p) => (p.n <= 2 ? { ...p, status: 'Paid' as const } : p)),
     ...payPlan('D-11', 'Q-009', [it('Cloud Hosting', 1, 60000, 60000, 'Annual', 24)], addM(day(6), -12)).map((p) => (p.n === 1 ? { ...p, status: 'Paid' as const } : p))],
   markPaid: (id, paid) => { const p = get().payments.find((x) => x.id === id)!; set({ payments: get().payments.map((x) => (x.id === id ? { ...x, status: paid ? 'Paid' as const : 'Due' as const } : x)) }); log(p.dealId, `${p.kind} payment ${p.n}/${p.of} marked ${paid ? 'paid' : 'unpaid'}`) },
-  checkReminders: () => { const lim = day(get().settings.remindDays ?? 7); const due = get().payments.filter((p) => p.status === 'Due' && !p.notified && p.due <= lim); if (!due.length) return
-    due.forEach((p) => { const dl = get().deals.find((d) => d.id === p.dealId); notify(['admin', 'ceo', 'rep'], `${p.due < day(0) ? 'Overdue' : 'Reminder'}: ${p.kind.toLowerCase()} payment ${p.n}/${p.of} for ${dl?.company} (₹${Math.round(p.amount).toLocaleString('en-IN')}) due ${p.due}`, 'payments') })
-    set({ payments: get().payments.map((p) => (due.some((d) => d.id === p.id) ? { ...p, notified: true } : p)) }) },
+  checkReminders: () => { const lim = day(get().settings.remindDays ?? 7); const due = get().payments.filter((p) => p.status === 'Due' && !p.notified && p.due <= lim)
+    if (due.length) {
+      due.forEach((p) => { const dl = get().deals.find((d) => d.id === p.dealId); notify(['admin', 'ceo', 'rep'], `${p.due < day(0) ? 'Overdue' : 'Reminder'}: ${p.kind.toLowerCase()} payment ${p.n}/${p.of} for ${dl?.company} (₹${Math.round(p.amount).toLocaleString('en-IN')}) due ${p.due}`, 'payments') })
+      set({ payments: get().payments.map((p) => (due.some((d) => d.id === p.id) ? { ...p, notified: true } : p)) }) }
+    // follow-up reminders go only to the person who set them
+    const fu = get().tasks.filter((t) => t.kind === 'followup' && !t.done && !t.notified && t.due <= day(0))
+    if (fu.length) {
+      set({ tasks: get().tasks.map((t) => (fu.some((f) => f.id === t.id) ? { ...t, notified: true } : t)) })
+      fu.forEach((t) => { const dl = get().deals.find((d) => d.id === t.dealId); notify([t.remindRole ?? 'rep'], `${t.due < day(0) ? 'Overdue follow-up' : 'Follow-up due today'}: ${t.title}${dl ? ` (${dl.company})` : ''}`, `deals/${t.dealId}`, t.remindUser) }) } },
   settings: { auto: 5, admin: 15, remindDays: 7 },
   products: [
     { id: 'p1', name: 'CRM License', list: 1000, min: 800, billing: 'One-time' }, { id: 'p2', name: 'Onboarding', list: 5000, min: 4000, billing: 'One-time' },
     { id: 'p3', name: 'Support Plan', list: 2400, min: 2000, billing: 'One-time' }, { id: 'p4', name: 'Training', list: 1500, min: 1200, billing: 'One-time' }, { id: 'p5', name: 'API Add-on', list: 3000, min: 2500, billing: 'One-time' },
     { id: 'p6', name: 'CRM Subscription', list: 1000, min: 800, billing: 'Monthly' }, { id: 'p7', name: 'Cloud Hosting', list: 60000, min: 50000, billing: 'Annual' }],
   addTask: (t) => { set({ tasks: [{ ...t, id: uid(), done: false }, ...get().tasks] }); log(t.dealId, `Task added: ${t.title}`) },
+  addFollowUp: (dealId, due, note) => { const d = get().deals.find((x) => x.id === dealId); if (!d) return; const u = get().users.find((x) => x.id === get().meId); const title = note?.trim() || `Follow up with ${d.client}`
+    set({ tasks: [{ id: uid(), dealId, title, due, done: false, rep: d.rep, kind: 'followup', remindRole: get().role ?? undefined, remindUser: u?.name }, ...get().tasks] }); log(dealId, `Follow-up reminder set for ${due}: ${title}`); get().checkReminders() },
+  snoozeTask: (id, days) => { const t = get().tasks.find((x) => x.id === id); if (!t) return; const base = t.due > day(0) ? t.due : day(0); const nd = new Date(new Date(base).getTime() + days * 864e5).toISOString().slice(0, 10)
+    set({ tasks: get().tasks.map((x) => (x.id === id ? { ...x, due: nd, notified: false } : x)) }); log(t.dealId, `Follow-up snoozed to ${nd}: ${t.title}`) },
   toggleTask: (id) => set({ tasks: get().tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)) }),
   delTask: (id) => set({ tasks: get().tasks.filter((t) => t.id !== id) }),
   setSettings: (p) => set({ settings: { ...get().settings, ...p } }),
@@ -139,13 +150,18 @@ export const useStore = create<S>()(persist((set, get) => {
     { id: 'n1', to: 'admin', text: 'Q-002 for Bluewave Foods needs approval (10.0% off)', href: 'approvals', read: false, at: new Date().toISOString() },
     { id: 'n2', to: 'ceo', text: 'Q-002 for Bluewave Foods needs approval (10.0% off)', href: 'approvals', read: false, at: new Date().toISOString() },
     { id: 'n3', to: 'ceo', text: 'Q-003 for Crest Logistics needs approval (20.0% off)', href: 'approvals', read: false, at: new Date().toISOString() }],
-  markRead: (role) => set({ notifs: get().notifs.map((n) => (n.to === role ? { ...n, read: true } : n)) }),
+  markRead: (role, user) => set({ notifs: get().notifs.map((n) => (n.to === role && (!n.user || n.user === user) ? { ...n, read: true } : n)) }),
   activity: [
-    { id: 'a1', dealId: 'D-3', text: 'Quote Q-003 submitted', at: new Date().toISOString() },
-    { id: 'a2', dealId: 'D-2', text: 'Quote Q-002 submitted', at: new Date(Date.now() - 36e5).toISOString() },
-    { id: 'a3', dealId: 'D-4', text: 'Stage changed to Closed', at: new Date(Date.now() - 864e5).toISOString() },
-    { id: 'a4', dealId: 'D-1', text: 'Quote Q-001 marked Sent', at: new Date(Date.now() - 2 * 864e5).toISOString() }], records: [], socials: [],
-  addRecord: (dealId, type, text, by) => { set({ records: [{ id: uid(), dealId, type, text, at: new Date().toISOString(), by }, ...get().records] }); log(dealId, `${type} added: ${text.slice(0, 60)}`) },
+    { id: 'a1', dealId: 'D-3', text: 'Quote Q-003 submitted', at: new Date().toISOString(), by: 'Vikram', byRole: 'rep' as const },
+    { id: 'a2', dealId: 'D-2', text: 'Quote Q-002 submitted', at: new Date(Date.now() - 36e5).toISOString(), by: 'Anita', byRole: 'rep' as const },
+    { id: 'a3', dealId: 'D-4', text: 'Stage changed to Closed', at: new Date(Date.now() - 864e5).toISOString(), by: 'Anita', byRole: 'rep' as const },
+    { id: 'a4', dealId: 'D-1', text: 'Quote Q-001 marked Sent', at: new Date(Date.now() - 2 * 864e5).toISOString(), by: 'Anita', byRole: 'rep' as const }], records: [
+    { id: 'r1', dealId: 'D-1', type: 'Call', text: 'Walked through the annual plan. Ravi wants a 10% discount on the licence.', at: new Date(Date.now() - 3 * 864e5).toISOString(), by: 'Anita', contact: 'Ravi Shah', outcome: 'Needs follow-up', duration: 18, next: 'Send revised quote', nextDue: day(2) },
+    { id: 'r2', dealId: 'D-2', type: 'Meeting', text: 'On-site demo with the Bluewave ops team. Positive reaction, asked about volume pricing.', at: new Date(Date.now() - 5 * 864e5).toISOString(), by: 'Anita', contact: 'Neha Patil', outcome: 'Interested', duration: 45 },
+    { id: 'r3', dealId: 'D-3', type: 'Call', text: 'Imran says a competitor is quoting lower. Needs a counter-offer by Friday.', at: new Date(Date.now() - 1 * 864e5).toISOString(), by: 'Vikram', contact: 'Imran Khan', outcome: 'Needs follow-up', duration: 12 }], socials: [],
+  addRecord: (dealId, type, text, by, x) => { set({ records: [{ id: uid(), dealId, type, text, at: x?.at ?? new Date().toISOString(), by, contact: x?.contact, outcome: x?.outcome, duration: x?.duration, next: x?.next, nextDue: x?.nextDue }, ...get().records] })
+    log(dealId, `${type} logged${x?.outcome ? ` (${x.outcome})` : ''}${x?.contact ? ` with ${x.contact}` : ''}: ${text.slice(0, 60)}`)
+    if (x?.nextDue && x.next?.trim()) get().addFollowUp(dealId, x.nextDue, x.next.trim()) },
   addSocial: (dealId, platform, handle) => { set({ socials: [...get().socials, { id: uid(), dealId, platform, handle }] }); log(dealId, `${platform} account added`) },
   removeSocial: (id) => set({ socials: get().socials.filter((x) => x.id !== id) }),
   role: null,

@@ -40,3 +40,11 @@ Cancelling a deal now requires a reason (dropdown) plus the note. Shown on the d
 Admin/CEO → Audit log. Every action records who did it and when. Filter by user, category, date or text, and export CSV.
 ## Design system
 Flat, enterprise-style UI. All colours are tokens at the top of `app/globals.css` (`--brand`, `--bg`, `--card`, `--ink`, `--mute`). To re-brand, change ``--brand`, `--brand-solid`, `--brand-hover` and `--brand-light` (light and dark blocks). Corner radii live in `tailwind.config.js`. Font: Inter (loaded from Google Fonts, falls back to the system font offline).
+## Duplicate check
+New deal dialog and deal GST field warn about an existing deal with the same GST number or the same/similar company name (ignores Pvt/Ltd/case/punctuation, tolerates typos). It warns but never blocks: tick "This is a different client" to create anyway (logged in the audit log). Reports → "Possible duplicate clients" lists pairs already in the data. Logic: `lib/dupes.ts`.
+## Call & meeting log
+Deal page → "Call & meeting log": type, who with, when, duration, outcome, notes and an optional next step + date (creates a follow-up task automatically). Shows "last contact", filters by type, and feeds Reports → "Calls and meetings by rep".
+## Follow-up reminders
+Deal page → "Follow-up reminder": quick dates or a custom date + note. You get a bell notification on the due date (only you, not other users), it shows in Tasks with a Follow-up tag, and can be snoozed a day. Reminders are checked on load and every 5 minutes while the app is open.
+## Rep profiles
+Admin/CEO: click any rep name (deals, clients, stages, pipeline, tasks, reports, audit log, dashboard leaderboard) to open `/team/[id]` with Overview, Deals, Calls & meetings, Tasks, Activity and Profile tabs.

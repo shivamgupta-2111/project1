@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useState } from 'react'
 import Shell from '@/components/Shell'
 import NewDeal from '@/components/NewDeal'
+import RepLink from '@/components/RepLink'
 import { stageTo } from '@/components/CloseDialog'
 import { useStore, Role, Deal, dealValue } from '@/lib/store'
 const COLS = [
@@ -24,7 +25,7 @@ export default function Pipeline() {
           <div className="grid gap-3">{col.length === 0 && <p className="py-6 text-center text-xs text-mute">Drop a deal here</p>}{col.map((d) => {
             return <div key={d.id} draggable onDragStart={() => setDrag(d.id)} onDragEnd={() => { setDrag(null); setOver(null) }} className={`box cursor-grab p-3 active:cursor-grabbing ${i >= 4 ? `border-l-4 ${i === 5 ? 'border-l-red-500' : 'border-l-green-600'}` : ''}`}>
               <Link href={`/${role}/deals/${d.id}`} className="font-medium hover:text-brand">{d.company}</Link>
-              <p className="text-xs text-mute">{d.client} · {d.risk} risk</p>
+              <p className="text-xs text-mute">{d.client} · {d.risk} risk{role !== 'rep' && <> · <RepLink name={d.rep} /></>}</p>
               <p className="mt-1 text-sm font-semibold">₹{Math.round(dealValue(quotes, d.id)).toLocaleString('en-IN')}</p>
               {i >= 4 && d.closeNote && <p className="mt-1 text-xs text-mute">{d.closeNote}</p>}
               <select aria-label="Move to" className="inp mt-2 py-1 text-xs" value={colOf(d)} onChange={(e) => { const n = Number(e.target.value); stageTo(d.id, COLS[n].stage, COLS[n].out) }}>{COLS.map((x, n) => <option key={x.name} value={n}>{x.name}</option>)}</select></div> })}</div>

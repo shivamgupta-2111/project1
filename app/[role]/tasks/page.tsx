@@ -5,9 +5,11 @@ import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import Shell from '@/components/Shell'
 import { toast } from '@/components/Toaster'
+import RepLink from '@/components/RepLink'
+import { dueLabel } from '@/components/FollowUp'
 import { useStore, Role, Task } from '@/lib/store'
 export default function Tasks() {
-  const role = useParams().role as Role; const myName = useStore((s) => s.users.find((u) => u.id === s.meId)?.name); const { tasks, deals, addTask, toggleTask, delTask } = useStore()
+  const role = useParams().role as Role; const myName = useStore((s) => s.users.find((u) => u.id === s.meId)?.name); const { tasks, deals, addTask, toggleTask, delTask, snoozeTask } = useStore()
   const today = new Date().toISOString().slice(0, 10); const mineDeals = role === 'rep' ? deals.filter((d) => d.rep === myName) : deals
   const [f, setF] = useState({ title: '', dealId: '', due: today })
   const mine = role === 'rep' ? tasks.filter((t) => t.rep === myName) : tasks
@@ -27,7 +29,8 @@ export default function Tasks() {
         <p className={`mb-3 font-medium ${c}`}>{name} <span className="text-sm font-normal text-mute">({list.length})</span></p>
         {list.length === 0 ? <p className="text-sm text-mute">Nothing here.</p> : <ul className="grid gap-2">{list.map((t) => <li key={t.id} className="flex items-center gap-3 rounded-lg border border-line px-3 py-2 text-sm">
           <input type="checkbox" className="h-4 w-4 accent-[#e87722]" checked={t.done} onChange={() => toggleTask(t.id)} aria-label="Mark done" />
-          <span className="min-w-0 flex-1"><span className={t.done ? 'line-through text-mute' : ''}>{t.title}</span><Link href={`/${role}/deals/${t.dealId}`} className="block text-xs text-mute hover:text-brand">{deals.find((d) => d.id === t.dealId)?.company} · {t.due}</Link></span>
+          <span className="min-w-0 flex-1"><span className={t.done ? 'line-through text-mute' : ''}>{t.title}</span>{t.kind === 'followup' && <span className="pill ml-2 bg-brand/10 text-brand">Follow-up</span>}<Link href={`/${role}/deals/${t.dealId}`} className="block text-xs text-mute hover:text-brand">{deals.find((d) => d.id === t.dealId)?.company} · {t.due}{!t.done && t.kind === 'followup' && ` · ${dueLabel(t.due)[0]}`}</Link>{role !== 'rep' && <span className="block text-xs text-mute">Rep: <RepLink name={t.rep} /></span>}</span>
+          {!t.done && t.kind === 'followup' && <button className="btn2 !px-2 !py-1 text-xs" title="Push back one day" onClick={() => { snoozeTask(t.id, 1); toast('Snoozed for a day') }}>Snooze</button>}
           <button aria-label="Delete" onClick={() => delTask(t.id)}><Trash2 size={16} className="text-mute" /></button></li>)}</ul>}</div>)}</div>
     </Shell>)
 }

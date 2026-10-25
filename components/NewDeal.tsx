@@ -1,14 +1,16 @@
 'use client'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X } from 'lucide-react'
-import { useStore, Role } from '@/lib/store'
+import { Plus, X, AlertTriangle } from 'lucide-react'
+import { useStore, Role, STAGES } from '@/lib/store'
+import { findDupes, GST_RE } from '@/lib/dupes'
 import { toast } from '@/components/Toaster'
 import { useEsc } from '@/components/useEsc'
 export default function NewDeal({ role }: { role: Role }) {
-  const { addDeal, users } = useStore(); const myName = useStore((s) => s.users.find((u) => u.id === s.meId)?.name); const reps = users.filter((u) => u.role === 'rep'); const r = useRouter(); const [open, setOpen] = useState(false); useEsc(open, () => setOpen(false))
-  const [f, setF] = useState({ company: '', client: '', gst: '', target: '', rep: '', risk: 'Low' as 'Low' | 'Medium' | 'High' })
-  const save = () => { const id = addDeal({ company: f.company, client: f.client, gst: f.gst, target: f.target, risk: f.risk, rep: role === 'rep' ? myName || '' : f.rep || reps[0]?.name || '', notes: '' }); toast('Deal created'); setOpen(false); r.push(`/${role}/deals/${id}`) }
+  const { addDeal, logAct, deals, users } = useStore(); const myName = useStore((s) => s.users.find((u) => u.id === s.meId)?.name); const reps = users.filter((u) => u.role === 'rep'); const r = useRouter(); const [open, setOpen] = useState(false); useEsc(open, () => setOpen(false))
+  const [f, setF] = useState({ company: '', client: '', gst: '', target: '', rep: '', risk: 'Low' as 'Low' | 'Medium' | 'High' }); const [ack, setAck] = useState(false)
+  const dupes = useMemo(() => findDupes(deals, { company: f.company, gst: f.gst }), [deals, f.company, f.gst]); const gstBad = f.gst.length > 0 && !GST_RE.test(f.gst)
+  const save = () => { const id = addDeal({ company: f.company, client: f.client, gst: f.gst, target: f.target, risk: f.risk, rep: role === 'rep' ? myName || '' : f.rep || reps[0]?.name || '', notes: '' }); if (dupes.length) logAct(id, `Created although it may duplicate ${dupes.map((x) => x.deal.id).join(', ')} (${dupes[0].reason.toLowerCase()})`); toast('Deal created'); setOpen(false); setAck(false); setF({ company: '', client: '', gst: '', target: '', rep: '', risk: 'Low' }); r.push(`/${role}/deals/${id}`) }
   return (<>
     <button className="btn flex items-center gap-1" onClick={() => setOpen(true)}><Plus size={16} />New deal</button>
     {open && <div className="fixed inset-0 z-50 grid place-items-end bg-[#0a0f1a]/55 p-0 md:place-items-center md:p-4" onClick={() => setOpen(false)}>
@@ -18,10 +20,17 @@ export default function NewDeal({ role }: { role: Role }) {
           <input autoFocus className="inp" placeholder="Company name" value={f.company} onChange={(e) => setF({ ...f, company: e.target.value })} />
           <input className="inp" placeholder="Client name" value={f.client} onChange={(e) => setF({ ...f, client: e.target.value })} />
           <input className="inp" placeholder="GST number (optional)" maxLength={15} value={f.gst} onChange={(e) => setF({ ...f, gst: e.target.value.toUpperCase() })} />
+          {gstBad && <p className="-mt-1 text-xs text-amber-600">GST should be 15 characters, like 27AAAAA0000A1Z5. You can still save it.</p>}
+          {dupes.length > 0 && <div role="alert" className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+            <p className="flex items-center gap-2 font-medium text-amber-600"><AlertTriangle size={16} />Possible duplicate{dupes.length > 1 ? 's' : ''} found</p>
+            <ul className="mt-2 grid gap-2">{dupes.map((x) => <li key={x.deal.id} className="flex items-start justify-between gap-3 rounded-md bg-card/60 p-2">
+              <span className="min-w-0"><b className="block truncate">{x.deal.company}</b><span className="block text-xs text-mute">{x.deal.client} · Owner: {x.deal.rep} · {x.deal.stage === 4 ? (x.deal.outcome === 'Cancelled' ? 'Cancelled' : 'Won') : STAGES[x.deal.stage]}</span><span className={`pill mt-1 inline-block ${x.strong ? 'bg-red-500/15 text-red-500' : 'bg-amber-500/15 text-amber-600'}`}>{x.reason}</span></span>
+              <a href={`/${role}/deals/${x.deal.id}`} target="_blank" rel="noreferrer" className="shrink-0 text-xs text-brand underline">Open</a></li>)}</ul>
+            <label className="mt-3 flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#e87722]" checked={ack} onChange={(e) => setAck(e.target.checked)} />This is a different client. Create it anyway.</label></div>}
           <div className="grid grid-cols-2 gap-3"><input type="date" className="inp" value={f.target} onChange={(e) => setF({ ...f, target: e.target.value })} aria-label="Target date" />
             <select className="inp" value={f.risk} onChange={(e) => setF({ ...f, risk: e.target.value as 'Low' })}>{['Low', 'Medium', 'High'].map((x) => <option key={x}>{x}</option>)}</select></div>
           {role !== 'rep' && <label className="grid gap-1 text-sm">Assign to rep<select className="inp" value={f.rep || reps[0]?.name} onChange={(e) => setF({ ...f, rep: e.target.value })}>{reps.map((u) => <option key={u.id}>{u.name}</option>)}</select></label>}
-          <button className="btn" disabled={!f.company.trim() || !f.client.trim()} onClick={save}>Create deal</button>
+          <button className="btn" disabled={!f.company.trim() || !f.client.trim() || (dupes.length > 0 && !ack)} onClick={save}>{dupes.length > 0 ? 'Create anyway' : 'Create deal'}</button>
         </div></div></div>}
   </>)
 }

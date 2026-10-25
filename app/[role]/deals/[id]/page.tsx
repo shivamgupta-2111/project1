@@ -9,6 +9,8 @@ import { stageTo } from '@/components/CloseDialog'
 import DealTabs from '@/components/DealTabs'
 import DealInfo from '@/components/DealInfo'
 import Templates from '@/components/Templates'
+import FollowUp from '@/components/FollowUp'
+import RepLink from '@/components/RepLink'
 import Num from '@/components/Num'
 import { useStore, Role, Quote, STAGES, discountPct, needOf, total, lineAmt, arrOf, Billing, payPlan, origAmt, lineDiscPct, origTotal, subTotal, discAmt } from '@/lib/store'
 const inr = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN')
@@ -35,7 +37,7 @@ export default function Deal() {
   return (
     <Shell role={r}>
       <div className="box">
-        <div className="flex flex-wrap justify-between gap-2"><div className="flex items-center gap-3"><Avatar name={d.company} size={40} /><h1 className="text-lg font-semibold">{d.company}</h1></div><span className="text-sm text-mute">{d.client} · GST {d.gst}</span></div>
+        <div className="flex flex-wrap justify-between gap-2"><div className="flex items-center gap-3"><Avatar name={d.company} size={40} /><h1 className="text-lg font-semibold">{d.company}</h1></div><span className="text-sm text-mute">{d.client} · GST {d.gst || '—'} · Owner: <RepLink name={d.rep} className="font-medium text-ink" /></span></div>
         <div className="mt-3 flex gap-1 overflow-x-auto">{STAGES.map((s, i) => { const closed = i === 4 && d.stage === 4; const col = closed ? (d.outcome === 'Cancelled' ? 'bg-red-500 text-white' : 'bg-green-600 text-white') : i <= d.stage ? 'bg-brand text-white' : 'border border-line text-mute'
           return <button key={s} onClick={() => stageTo(d.id, i)} className={`whitespace-nowrap rounded-md px-3 py-1 text-xs ${col}`}>{closed ? (d.outcome === 'Cancelled' ? 'Cancelled' : 'Done · Won') : s}</button> })}</div>
         {d.outcome && <div className={`mt-3 rounded-lg border-l-4 p-3 text-sm ${d.outcome === 'Cancelled' ? 'border-red-500 bg-red-500/10' : 'border-green-600 bg-green-600/10'}`}><b>{d.outcome === 'Cancelled' ? 'Deal cancelled' : 'Deal done'}</b>{d.closedAt && <span className="text-mute"> · {d.closedAt}</span>}<p className="mt-1">{d.closeNote}</p></div>}
@@ -43,7 +45,8 @@ export default function Deal() {
       {finalQ && <div className="box mt-4 flex flex-wrap items-center justify-between gap-3 border-brand/50 bg-brand/5"><div><p className="text-xs text-mute">Final amount · {finalQ.id} v{finalQ.version}</p><p className="text-2xl font-semibold">₹{Math.round(total(finalQ)).toLocaleString('en-IN')}</p>{next && <p className="mt-1 text-xs text-mute">Next {next.kind.toLowerCase()} payment {next.n}/{next.of}: ₹{Math.round(next.amount).toLocaleString('en-IN')} due {next.due}</p>}</div>
         {inv ? <Link href={`/${r}/invoices/${inv.id}`} className="btn2">View invoice {inv.id}</Link> : r === 'admin' ? <button className="btn" onClick={() => { const id = createInvoice(finalQ.id, 'Admin'); toast(`Invoice ${id} created`) }}>Create invoice</button> : <span className="text-sm text-mute">Waiting for Admin to create the invoice</span>}</div>}
       <DealInfo dealId={d.id} />
-      <DealTabs dealId={d.id} who={r === 'rep' ? d.rep : r} />
+      <FollowUp dealId={d.id} />
+      <DealTabs dealId={d.id} who={meName ?? (r === 'rep' ? d.rep : r)} />
       <Templates dealId={d.id} who={meName ?? (r === 'rep' ? d.rep : r)} />
       <div className="mb-2 mt-6 flex items-center justify-between"><h2 className="font-medium">Quotations</h2><button className="btn" onClick={() => { setSel(addQuote(d.id)); toast('New quote created') }}>New quote</button></div>
       <div className="mb-3 flex gap-2 overflow-x-auto">{qs.map((x) => <button key={x.id} onClick={() => setSel(x.id)} className={`btn2 whitespace-nowrap ${q?.id === x.id ? 'border-brand' : ''}`}>{x.id} v{x.version} · {x.status}</button>)}</div>

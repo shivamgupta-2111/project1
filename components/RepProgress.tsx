@@ -4,7 +4,7 @@ import { useStore, User, dealValue, isWon, isLost, arrOf } from '@/lib/store'
 import { toast } from '@/components/Toaster'
 import PhotoUpload from '@/components/PhotoUpload'
 const inr = (n: number) => '₹' + Math.round(n).toLocaleString('en-IN')
-export default function RepProgress({ user, manager, progress = true }: { user: User; manager: boolean; progress?: boolean }) {
+export default function RepProgress({ user, manager, progress = true, details = true }: { user: User; manager: boolean; progress?: boolean; details?: boolean }) {
   const { deals, quotes, tasks, invoices, updateUser } = useStore()
   const mine = deals.filter((d) => d.rep === user.name); const open = mine.filter((d) => d.stage < 4); const won = mine.filter(isWon)
   const wonVal = won.reduce((s, d) => s + dealValue(quotes, d.id), 0); const pipe = open.reduce((s, d) => s + dealValue(quotes, d.id), 0)
@@ -20,7 +20,7 @@ export default function RepProgress({ user, manager, progress = true }: { user: 
       <div className="mt-3 h-3 rounded-full bg-line"><div className="h-3 rounded-full bg-brand transition-all" style={{ width: `${pct}%` }} /></div></div>
     <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">{stats.map(([k, v]) => <div key={k} className="box"><p className="text-sm text-mute">{k}</p><p className="mt-1 text-xl font-semibold">{v}</p></div>)}</div>
     </>}
-    <div className="box mt-4"><p className="mb-3 font-medium">Details</p>
+    {details && <div className="box mt-4"><p className="mb-3 font-medium">Details</p>
       <PhotoUpload user={user} />
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1 text-sm">Name<input className="inp" disabled value={user.name} /></label>
@@ -28,6 +28,6 @@ export default function RepProgress({ user, manager, progress = true }: { user: 
         <label className="grid gap-1 text-sm">Phone<input className="inp" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></label>
         <label className="grid gap-1 text-sm">City<input className="inp" value={f.city} onChange={(e) => setF({ ...f, city: e.target.value })} /></label>
         {manager && <label className="grid gap-1 text-sm">Sales target (₹)<input type="number" className="inp" value={f.target} onChange={(e) => setF({ ...f, target: Number(e.target.value) || 0 })} /></label>}</div>
-      <button className="btn mt-3" onClick={() => { updateUser(user.id, manager ? f : { phone: f.phone, city: f.city }); toast('Details saved') }}>Save details</button></div>
+      <button className="btn mt-3" onClick={() => { updateUser(user.id, manager ? f : { phone: f.phone, city: f.city }); toast('Details saved') }}>Save details</button></div>}
   </>)
 }
