@@ -14,24 +14,24 @@ export default function Login() {
   const go = () => { const u = login(email.trim().toLowerCase(), pw); if (!u) return setErr('Email or password is incorrect. Use a demo account below.'); r.push('/' + u.role) }
   return (
     <main className="grid min-h-screen lg:grid-cols-2">
-      <section className="relative hidden flex-col justify-between overflow-hidden bg-[#0a0e17] px-[60px] py-10 text-white lg:flex">
-        <div aria-hidden className="pointer-events-none absolute -right-48 -top-56 h-[720px] w-[720px] rounded-full" style={{ background: 'radial-gradient(circle at center, rgba(236,123,34,.34) 0%, rgba(160,80,20,.18) 38%, transparent 68%)', filter: 'blur(30px)' }} />
-        <p className="relative flex items-center gap-3.5 text-[22px] font-semibold"><span className="grid h-[46px] w-[46px] place-items-center rounded-[14px] bg-[#ec7b22] text-[22px] font-semibold text-white">P</span>Pipeline CRM</p>
+      <section className="relative hidden flex-col justify-between overflow-hidden bg-[#0b1220] px-[60px] py-10 text-white lg:flex">
+        <div aria-hidden className="pointer-events-none absolute -right-48 -top-56 h-[720px] w-[720px] rounded-full" style={{ background: 'radial-gradient(circle at center, rgba(37,99,235,.38) 0%, rgba(37,99,235,.14) 40%, transparent 68%)', filter: 'blur(30px)' }} />
+        <p className="relative flex items-center gap-3.5 text-[22px] font-semibold"><span className="grid h-[46px] w-[46px] place-items-center rounded-lg bg-[#2563eb] text-[22px] font-semibold text-white">P</span>Pipeline CRM</p>
         <div className="relative max-w-[560px]">
           <h1 className="plain text-[44px] font-semibold leading-[1.15] tracking-tight" style={{ color: '#fff' }}>Close more deals with less chasing.</h1>
           <p className="mt-6 max-w-[520px] text-lg leading-relaxed text-[#8b8f9c]">Track deals, send multiple quotations and get discounts approved in one place.</p>
           <ul className="mt-9 grid gap-[22px] text-base text-[#e6e7ea]">
-            <li className="flex items-center gap-4"><TrendingUp size={20} strokeWidth={1.75} className="text-[#ec7b22]" />Live pipeline and revenue view</li>
-            <li className="flex items-center gap-4"><FileText size={20} strokeWidth={1.75} className="text-[#ec7b22]" />Multiple quotations per deal</li>
-            <li className="flex items-center gap-4"><ShieldCheck size={20} strokeWidth={1.75} className="text-[#ec7b22]" />Admin and CEO approval for price cuts</li>
+            <li className="flex items-center gap-4"><TrendingUp size={20} strokeWidth={1.75} className="text-[#60a5fa]" />Live pipeline and revenue view</li>
+            <li className="flex items-center gap-4"><FileText size={20} strokeWidth={1.75} className="text-[#60a5fa]" />Multiple quotations per deal</li>
+            <li className="flex items-center gap-4"><ShieldCheck size={20} strokeWidth={1.75} className="text-[#60a5fa]" />Admin and CEO approval for price cuts</li>
           </ul>
         </div>
-        <p className="relative text-sm text-[#6b6f7b]">College project · frontend demo</p>
+        <p className="relative text-sm text-[#6b6f7b]">Pipeline CRM · demo environment</p>
       </section>
       <section className="relative flex items-center justify-center p-6">
         <button className="btn2 absolute right-4 top-4" aria-label="Toggle theme" onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}>{resolvedTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}</button>
         <div className="box w-full max-w-sm !p-8">
-          <h2 className="grad-text w-fit text-3xl font-semibold">Sign in</h2>
+          <h2 className="text-2xl font-semibold">Sign in to Pipeline CRM</h2>
           <p className="mt-1 text-sm text-mute">Welcome back. Enter your details to continue.</p>
           <div className="mt-6 grid gap-3">
             <label className="grid gap-1 text-sm">Email<input className="inp" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErr('') }} placeholder="you@company.com" /></label>
@@ -39,7 +39,7 @@ export default function Login() {
             {err && <p role="alert" className="text-sm text-red-500">{err}</p>}
             <button className="btn mt-1" onClick={go}>Sign in</button>
           </div>
-          <div className="mt-8 glass-soft rounded-[1.75rem] p-4">
+          <div className="mt-6 glass-soft rounded-lg p-4">
             <p className="text-sm font-medium">Demo accounts <span className="font-normal text-mute">(password: demo123)</span></p>
             <p className="mt-1 text-xs text-mute">Rep accounts created by Admin or CEO can sign in here too.</p>
             <div className="mt-3 grid gap-2">{USERS.map((u) => <button key={u.email} className="btn2 flex justify-between text-left" onClick={() => { setEmail(u.email); setPw('demo123'); setErr('') }}><span>{u.label}</span><span className="text-mute">{u.email}</span></button>)}</div>

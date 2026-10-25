@@ -38,3 +38,5 @@ Deal page → Message templates. Pick a template and contact, edit the text, the
 Cancelling a deal now requires a reason (dropdown) plus the note. Shown on the dashboard Churn box and in Reports (Admin/CEO): reasons by count and value, by rep, lost-deals table, CSV export.
 ## Audit log
 Admin/CEO → Audit log. Every action records who did it and when. Filter by user, category, date or text, and export CSV.
+## Design system
+Flat, enterprise-style UI. All colours are tokens at the top of `app/globals.css` (`--brand`, `--bg`, `--card`, `--ink`, `--mute`). To re-brand, change `--brand`, `--brand-solid` and `--brand-hover` (light and dark blocks). Corner radii live in `tailwind.config.js`. Font: Inter (loaded from Google Fonts, falls back to the system font offline).

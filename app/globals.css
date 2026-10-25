@@ -1,66 +1,60 @@
 @tailwind base;@tailwind components;@tailwind utilities;
-/* Brand palette: orange #e87722 / dark #d45f1a, light-bg #f7f7f5, dark-bg #0a0f1a, dark-card #1a1a2e */
-:root{--bg:253 244 236;--card:255 255 255;--line:120 100 140;--ink:36 30 58;--mute:108 102 128;--brand:232 119 34;
---glass:rgba(255,255,255,.46);--glass-strong:rgba(255,255,255,.66);--glass-edge:rgba(255,255,255,.75);--glass-shadow:0 10px 40px rgba(120,80,160,.14);
---grad:linear-gradient(135deg,#ffb15c 0%,#f2792b 38%,#ee4f7a 78%,#c04fd8 100%)}
-.dark{--bg:9 11 22;--card:26 26 46;--line:255 255 255;--ink:246 244 255;--mute:160 160 184;--brand:244 132 52;
---glass:rgba(255,255,255,.07);--glass-strong:rgba(30,28,56,.72);--glass-edge:rgba(255,255,255,.16);--glass-shadow:0 12px 44px rgba(0,0,0,.45);
---grad:linear-gradient(135deg,#ff9f4a 0%,#f2702a 38%,#e8456f 78%,#a647d9 100%)}
+/* Design tokens: neutral slate surfaces, one blue accent. Colours are space-separated RGB so Tailwind alpha works. */
+:root{--bg:246 247 249;--card:255 255 255;--line:15 23 42;--ink:15 23 42;--mute:100 116 139;--brand:37 99 235;--brand-solid:37 99 235;--brand-hover:29 78 216;
+--shadow:0 1px 2px rgba(16,24,40,.05);--shadow-lg:0 12px 32px rgba(16,24,40,.16)}
+.dark{--bg:12 14 20;--card:21 24 33;--line:255 255 255;--ink:241 245 249;--mute:148 163 184;--brand:96 165 250;--brand-solid:37 99 235;--brand-hover:59 130 246;
+--shadow:0 1px 2px rgba(0,0,0,.4);--shadow-lg:0 16px 40px rgba(0,0,0,.55)}
 html{background:rgb(var(--bg))}
-body{@apply text-ink antialiased;font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:transparent;min-height:100vh}
-/* smooth drifting colour mesh behind all glass */
-body::before{content:'';position:fixed;inset:-10%;z-index:-1;pointer-events:none;
-background:radial-gradient(38% 42% at 12% 8%,rgba(255,170,90,.55),transparent 70%),radial-gradient(34% 40% at 88% 12%,rgba(236,92,150,.38),transparent 70%),radial-gradient(40% 44% at 78% 92%,rgba(120,110,255,.38),transparent 70%),radial-gradient(36% 40% at 8% 88%,rgba(70,200,210,.32),transparent 70%);
-filter:saturate(1.15);animation:drift 28s ease-in-out infinite alternate}
-.dark body::before{background:radial-gradient(38% 42% at 12% 8%,rgba(244,120,40,.38),transparent 70%),radial-gradient(34% 40% at 88% 12%,rgba(220,60,130,.30),transparent 70%),radial-gradient(40% 44% at 78% 92%,rgba(90,80,240,.34),transparent 70%),radial-gradient(36% 40% at 8% 88%,rgba(30,170,190,.24),transparent 70%)}
-@keyframes drift{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(2%,-3%,0) scale(1.08)}}
-@media (prefers-reduced-motion:reduce){body::before{animation:none}}
-/* ---------- liquid glass surfaces ---------- */
-.glass,.box{position:relative;background:linear-gradient(135deg,var(--glass-strong),var(--glass));border:1px solid var(--glass-edge);
--webkit-backdrop-filter:blur(26px) saturate(1.8);backdrop-filter:blur(26px) saturate(1.8);
-box-shadow:var(--glass-shadow),inset 0 1.5px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(255,255,255,.12)}
+body{@apply text-ink antialiased;font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:transparent;min-height:100vh;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid rgb(var(--brand));outline-offset:2px}
+/* ---------- surfaces ---------- */
+.glass,.box{position:relative;background:rgb(var(--card));border:1px solid rgb(var(--ink)/.10);box-shadow:var(--shadow)}
 .glass.sticky{position:sticky}
 .glass.fixed{position:fixed}
-.glass::after,.box::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;
-background:linear-gradient(160deg,rgba(255,255,255,.35) 0%,rgba(255,255,255,0) 38%);opacity:.7;mix-blend-mode:soft-light}
 :where(.box){padding:1.25rem}
-.box{border-radius:2rem}
-.glass-soft{background:var(--glass);border:1px solid var(--glass-edge);-webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5)}
-.inp{@apply w-full px-4 py-2.5 text-sm outline-none transition;border-radius:9999px;color:rgb(var(--ink));background:var(--glass-strong);border:1px solid var(--glass-edge);
--webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:inset 0 2px 6px rgba(80,60,120,.08)}
-.dark .inp{background:rgba(255,255,255,.06)}
-textarea.inp{border-radius:1.5rem}
-select.inp{padding-right:1.5rem}
-.inp:focus{border-color:rgb(var(--brand));box-shadow:0 0 0 4px rgb(var(--brand)/.2),inset 0 2px 6px rgba(80,60,120,.06)}
+.box{border-radius:.75rem}
+a.box,button.box{transition:border-color .15s,box-shadow .15s}
+a.box:hover,button.box:hover{border-color:rgb(var(--brand)/.5)}
+.glass-soft{background:rgb(var(--ink)/.03);border:1px solid rgb(var(--ink)/.10)}
+/* ---------- form controls ---------- */
+.inp{@apply w-full px-3 py-2 text-sm outline-none transition;border-radius:.5rem;color:rgb(var(--ink));background:rgb(var(--card));border:1px solid rgb(var(--ink)/.18)}
+.dark .inp{background:rgba(255,255,255,.04)}
+.inp:hover{border-color:rgb(var(--ink)/.3)}
+.inp:focus,.inp:focus-visible{outline:none;border-color:rgb(var(--brand));box-shadow:0 0 0 3px rgb(var(--brand)/.18)}
 .inp:disabled{opacity:.6}
-.inp::placeholder{color:rgb(var(--mute)/.7)}
-.btn{@apply px-5 py-2.5 text-sm font-medium text-white transition;border-radius:9999px;background:var(--grad);background-size:140% 140%;background-position:0% 50%;border:1px solid rgba(255,255,255,.45);
-box-shadow:0 8px 22px rgba(238,79,122,.30),inset 0 1.5px 0 rgba(255,255,255,.55),inset 0 -2px 6px rgba(160,40,90,.25);text-shadow:0 1px 2px rgba(120,30,60,.3)}
-.btn:hover{background-position:100% 50%;transform:translateY(-1px);box-shadow:0 12px 28px rgba(238,79,122,.38),inset 0 1.5px 0 rgba(255,255,255,.6),inset 0 -2px 6px rgba(160,40,90,.25)}
-.btn:active{transform:translateY(0) scale(.98)}
-.btn:disabled{opacity:.4;transform:none}
-.btn2{@apply px-4 py-2.5 text-sm transition;border-radius:9999px;background:var(--glass-strong);border:1px solid var(--glass-edge);color:rgb(var(--ink));
--webkit-backdrop-filter:blur(14px) saturate(1.6);backdrop-filter:blur(14px) saturate(1.6);box-shadow:0 4px 14px rgba(120,80,160,.10),inset 0 1.5px 0 rgba(255,255,255,.55)}
-.btn2:hover{color:rgb(var(--brand));background:var(--glass-strong);transform:translateY(-1px);box-shadow:0 8px 20px rgba(238,120,60,.18),inset 0 1.5px 0 rgba(255,255,255,.6)}
-.pill{@apply rounded-full px-3 py-1 text-xs font-medium;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.bg-line{background-color:rgb(var(--ink)/.09)}
-.border-line{border-color:rgb(var(--ink)/.10)}
-.bg-brand{background-image:var(--grad)}
+.inp::placeholder{color:rgb(var(--mute)/.8)}
+select.inp{padding-right:1.5rem}
+.btn{@apply px-4 py-2 text-sm font-medium text-white transition;border-radius:.5rem;background:rgb(var(--brand-solid));border:1px solid rgb(var(--brand-solid));box-shadow:0 1px 2px rgba(16,24,40,.10)}
+.btn:hover{background:rgb(var(--brand-hover));border-color:rgb(var(--brand-hover))}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn2{@apply px-3.5 py-2 text-sm font-medium transition;border-radius:.5rem;background:rgb(var(--card));border:1px solid rgb(var(--ink)/.18);color:rgb(var(--ink));box-shadow:0 1px 2px rgba(16,24,40,.05)}
+.dark .btn2{background:rgba(255,255,255,.04)}
+.btn2:hover{background:rgb(var(--ink)/.05);border-color:rgb(var(--ink)/.3)}
+.btn2:disabled{opacity:.5;cursor:not-allowed}
+.pill{@apply rounded-full px-2.5 py-0.5 text-xs font-medium}
+/* ---------- colour helpers ---------- */
+.bg-line{background-color:rgb(var(--ink)/.08)}
+.border-line{border-color:rgb(var(--ink)/.12)}
+.bg-brand{background-color:rgb(var(--brand-solid))}
 .text-brand{color:rgb(var(--brand))}
-.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-main h1:not(.plain){background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;width:fit-content;letter-spacing:-.02em}
-.nav-pill{transition:all .25s ease}
-.nav-on{background:var(--grad);color:#fff!important;box-shadow:0 8px 20px rgba(238,79,122,.32),inset 0 1.5px 0 rgba(255,255,255,.5);text-shadow:0 1px 2px rgba(120,30,60,.25)}
-.nav-off:hover{background:var(--glass-strong);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.5)}
+.grad-text{color:rgb(var(--ink))}
+main h1{letter-spacing:-.015em;font-weight:600}
+/* ---------- navigation ---------- */
+.nav-pill{transition:background .15s,color .15s}
+.nav-on{background:rgb(var(--brand)/.10);color:rgb(var(--brand))!important}
+.nav-off:hover{background:rgb(var(--ink)/.05)}
+/* ---------- tables ---------- */
+table{border-collapse:collapse}
+thead th{font-size:.6875rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:rgb(var(--mute))}
+tbody tr{transition:background .1s}
+tbody tr:hover{background:rgb(var(--ink)/.03)}
 .print-only{display:none}
 @media print{body *{visibility:hidden}.print-only,.print-only *{visibility:visible}.print-only{display:block;position:absolute;left:0;top:0;width:100%;background:#fff}}
 @media print{.print-area,.print-area *{visibility:visible}.print-area{position:absolute;left:0;top:0;width:100%;background:#fff;color:#000;box-shadow:none;border:0}}
-.scroll-y{scrollbar-width:thin;scrollbar-color:rgb(var(--brand)/.6) transparent}
-.scroll-y::-webkit-scrollbar{width:8px}.scroll-y::-webkit-scrollbar-track{background:transparent;border-radius:8px}.scroll-y::-webkit-scrollbar-thumb{background:var(--grad);border-radius:8px}
+.scroll-y{scrollbar-width:thin;scrollbar-color:rgb(var(--ink)/.25) transparent}
+.scroll-y::-webkit-scrollbar{width:8px;height:8px}.scroll-y::-webkit-scrollbar-track{background:transparent}.scroll-y::-webkit-scrollbar-thumb{background:rgb(var(--ink)/.22);border-radius:8px}
 label.grid{align-content:start}
-
-.glass-dialog{background:linear-gradient(135deg,var(--glass-strong),var(--glass));background-color:rgb(var(--card)/.55);border:1px solid var(--glass-edge);-webkit-backdrop-filter:blur(36px) saturate(1.8);backdrop-filter:blur(36px) saturate(1.8);box-shadow:0 30px 80px rgba(60,30,100,.28),inset 0 1.5px 0 rgba(255,255,255,.6)}
-.dark .glass-dialog{background-color:rgba(24,22,46,.7)}
+.glass-dialog{background:rgb(var(--card));border:1px solid rgb(var(--ink)/.12);box-shadow:var(--shadow-lg)}
 
 /* ---------- dark mode readability fixes ---------- */
 :root{color-scheme:light}

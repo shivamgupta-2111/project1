@@ -44,7 +44,7 @@ export default function Templates({ dealId, who }: { dealId: string; who: string
         <div className="mb-3 grid gap-2 md:grid-cols-3">
           <select aria-label="Template" className="inp" value={tid} onChange={(e) => setTid(e.target.value)}>{TEMPLATES.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
           <select aria-label="Contact" className="inp" value={ci} onChange={(e) => setCi(Number(e.target.value))}>{cs.map((x, i) => <option key={x.id} value={i}>{x.name}</option>)}</select>
-          <div className="flex gap-2">{(['WhatsApp', 'Email'] as const).map((x) => <button key={x} onClick={() => setCh(x)} className={`flex flex-1 items-center justify-center gap-1.5 rounded-full border px-3 py-2 text-sm ${ch === x ? 'border-brand bg-brand/10 text-brand' : 'border-line text-mute'}`}>{x === 'Email' ? <Mail size={15} /> : <MessageCircle size={15} />}{x}</button>)}</div></div>
+          <div className="flex gap-2">{(['WhatsApp', 'Email'] as const).map((x) => <button key={x} onClick={() => setCh(x)} className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm ${ch === x ? 'border-brand bg-brand/10 text-brand' : 'border-line text-mute'}`}>{x === 'Email' ? <Mail size={15} /> : <MessageCircle size={15} />}{x}</button>)}</div></div>
         {ch === 'Email' && <input className="inp mb-2" aria-label="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />}
         <textarea rows={8} className="inp" aria-label="Message" value={body} onChange={(e) => setBody(e.target.value)} />
         <div className="mt-3 flex flex-wrap items-center gap-2">
