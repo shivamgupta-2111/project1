@@ -53,7 +53,7 @@ export default function Shell({ role, children, wide }: { role: Role; children: 
         <button className="mt-3 px-1 text-left text-xs text-mute hover:text-brand" onClick={() => { if (confirm('Reset all demo data?')) { localStorage.removeItem('crm-store'); location.href = '/' } }}>Reset demo data</button>
       </aside>
       <div className="min-w-0 flex-1 pb-20 md:pb-0">
-        <div className="sticky top-0 z-20 border-b border-line bg-card"><header className="flex h-14 items-center justify-between px-4 md:px-8">
+        <div className="glass-bar sticky top-0 z-20"><header className="flex h-14 items-center justify-between px-4 md:px-8">
           <span className="font-semibold md:hidden"><span className="mr-2 inline-grid h-7 w-7 place-items-center rounded-lg bg-brand text-sm font-bold text-white">P</span>Pipeline CRM</span>
           <span className="hidden text-sm md:block"><span className="text-mute capitalize">{role} portal</span>{cur && <><span className="mx-2 text-mute">/</span><span className="font-medium">{cur}</span></>}</span>
           <div className="flex items-center gap-2">
@@ -65,7 +65,7 @@ export default function Shell({ role, children, wide }: { role: Role; children: 
         </header><TabBar role={role} path={path} /></div>
         <main className={`mx-auto ${wide ? 'max-w-none' : 'max-w-6xl'} p-4 md:p-8`}>{children}</main>
       </div>
-      <nav aria-label="Mobile" className="scroll-y fixed inset-x-0 bottom-0 z-20 flex overflow-x-auto border-t border-line bg-card px-1 py-2 md:hidden">
+      <nav aria-label="Mobile" className="scroll-y glass-bar-t fixed inset-x-0 bottom-0 z-20 flex overflow-x-auto px-1 py-2 md:hidden">
         {nav.map((n) => <Link key={n.href} href={n.href} className={`flex min-w-[72px] shrink-0 flex-col items-center gap-0.5 text-[10px] ${on(n.href) ? 'font-semibold text-brand' : 'text-mute'}`}><span className="relative"><n.icon size={18} />{badge[n.label] > 0 && <span className="absolute -right-3 -top-2 rounded-full bg-brand px-1.5 text-[10px] font-semibold text-white">{badge[n.label]}</span>}</span>{n.label}</Link>)}
       </nav>
     </div>)

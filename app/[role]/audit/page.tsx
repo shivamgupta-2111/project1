@@ -27,11 +27,12 @@ export default function Audit() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div><h1 className="text-2xl font-semibold">Audit log</h1><p className="text-sm text-mute">Who did what, and when. {rows.length} of {activity.length} entries.</p></div>
         <button className="btn2 flex items-center gap-2" onClick={csv}><Download size={16} />Export CSV</button></div>
-      <div className="box mb-4 grid gap-2 md:grid-cols-5">
-        <input className="inp md:col-span-2" placeholder="Search action, deal or person" value={q} onChange={(e) => { setQ(e.target.value); setN(50) }} />
-        <select aria-label="User" className="inp" value={who} onChange={(e) => setWho(e.target.value)}><option value="All">All users</option>{people.map((p) => <option key={p}>{p}</option>)}</select>
-        <select aria-label="Category" className="inp" value={cat} onChange={(e) => setCat(e.target.value)}><option value="All">All categories</option>{[...CATS.map((c) => c[0]), 'Other'].map((c) => <option key={c}>{c}</option>)}</select>
-        <div className="flex gap-2"><input aria-label="From" type="date" className="inp" value={from} onChange={(e) => setFrom(e.target.value)} /><input aria-label="To" type="date" className="inp" value={to} onChange={(e) => setTo(e.target.value)} /></div>
+      <div className="box mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+        <label className="grid min-w-0 gap-1 text-xs font-medium text-mute sm:col-span-2">Search<input className="inp" placeholder="Search action, deal or person" value={q} onChange={(e) => { setQ(e.target.value); setN(50) }} /></label>
+        <label className="grid min-w-0 gap-1 text-xs font-medium text-mute">User<select className="inp" value={who} onChange={(e) => setWho(e.target.value)}><option value="All">All users</option>{people.map((p) => <option key={p}>{p}</option>)}</select></label>
+        <label className="grid min-w-0 gap-1 text-xs font-medium text-mute">Category<select className="inp" value={cat} onChange={(e) => setCat(e.target.value)}><option value="All">All categories</option>{[...CATS.map((c) => c[0]), 'Other'].map((c) => <option key={c}>{c}</option>)}</select></label>
+        <label className="grid min-w-0 gap-1 text-xs font-medium text-mute">From<input type="date" className="inp" value={from} onChange={(e) => setFrom(e.target.value)} /></label>
+        <label className="grid min-w-0 gap-1 text-xs font-medium text-mute">To<input type="date" className="inp" value={to} onChange={(e) => setTo(e.target.value)} /></label>
       </div>
       <div className="box overflow-x-auto">
         {rows.length === 0 ? <p className="py-6 text-center text-sm text-mute">No entries match these filters.</p> :

@@ -13,7 +13,7 @@ function Dlg({ deal, pre }: { deal: Deal; pre?: Out }) {
   const [out, setOut] = useState<Out>(pre || deal.outcome || 'Won'); const [note, setNote] = useState(deal.closeNote || ''); const [reason, setReason] = useState(deal.lostReason || '')
   const won = out === 'Won'; const shut = () => useC.setState({ id: null, out: undefined }); useEsc(true, shut)
   return (
-    <div className="fixed inset-0 z-50 grid place-items-end bg-slate-900/50 md:place-items-center md:p-4" onClick={shut}>
+    <div className="fixed inset-0 z-50 grid place-items-end bg-[#0a0f1a]/55 md:place-items-center md:p-4" onClick={shut}>
       <div role="dialog" aria-label="Close deal" className="w-full max-w-md rounded-t-xl glass-dialog p-6 md:rounded-xl" onClick={(e) => e.stopPropagation()}>
         <p className="text-lg font-semibold">Close {deal.company}</p><p className="mb-4 text-sm text-mute">How did this deal end? Add a note for your team.</p>
         <div className="grid grid-cols-2 gap-3">

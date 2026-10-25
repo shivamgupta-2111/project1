@@ -26,7 +26,7 @@ export default function Tasks() {
       <div className="mt-4 grid gap-4 lg:grid-cols-2">{groups.map(([name, list, c]) => <div key={name} className="box">
         <p className={`mb-3 font-medium ${c}`}>{name} <span className="text-sm font-normal text-mute">({list.length})</span></p>
         {list.length === 0 ? <p className="text-sm text-mute">Nothing here.</p> : <ul className="grid gap-2">{list.map((t) => <li key={t.id} className="flex items-center gap-3 rounded-lg border border-line px-3 py-2 text-sm">
-          <input type="checkbox" className="h-4 w-4 accent-[#2563eb]" checked={t.done} onChange={() => toggleTask(t.id)} aria-label="Mark done" />
+          <input type="checkbox" className="h-4 w-4 accent-[#e87722]" checked={t.done} onChange={() => toggleTask(t.id)} aria-label="Mark done" />
           <span className="min-w-0 flex-1"><span className={t.done ? 'line-through text-mute' : ''}>{t.title}</span><Link href={`/${role}/deals/${t.dealId}`} className="block text-xs text-mute hover:text-brand">{deals.find((d) => d.id === t.dealId)?.company} · {t.due}</Link></span>
           <button aria-label="Delete" onClick={() => delTask(t.id)}><Trash2 size={16} className="text-mute" /></button></li>)}</ul>}</div>)}</div>
     </Shell>)
