@@ -1,4 +1,7 @@
 # Pipeline CRM (frontend demo)
+
+> **Docs:** [`file-structure.md`](file-structure.md) explains where everything lives. [`functions-and-variables.md`](functions-and-variables.md) lists every type, store action, helper and component.
+
 ## Run
     npm install
     npm run dev      # http://localhost:3000

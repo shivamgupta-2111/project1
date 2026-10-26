@@ -1,3 +1,4 @@
+/** Client list with search; each card links to its deal. */
 'use client'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -5,23 +6,88 @@ import { useState } from 'react'
 import Shell from '@/components/Shell'
 import Avatar from '@/components/Avatar'
 import RepLink from '@/components/RepLink'
-import { useStore, Role, dealValue, STAGES } from '@/lib/store'
+import { useStore } from '@/lib/store'
+import { Role } from '@/lib/types'
+import { dealValue } from '@/lib/deals'
+import { STAGES } from '@/lib/constants'
+
 export default function Clients() {
-  const role = useParams().role as Role; const myName = useStore((s) => s.users.find((u) => u.id === s.meId)?.name); const { deals, quotes, contacts, activity } = useStore(); const [q, setQ] = useState('')
-  const mine = role === 'rep' ? deals.filter((d) => d.rep === myName) : deals
-  const list = mine.filter((d) => (d.company + d.client).toLowerCase().includes(q.toLowerCase()))
-  const last = (id: string) => activity.filter((a) => a.dealId === id).map((a) => a.at).sort().pop()
+  const role = useParams().role as Role
+  const myName = useStore((state) => state.users.find((user) => user.id === state.meId)?.name)
+  const { deals, quotes, contacts, activity } = useStore()
+  const [search, setSearch] = useState('')
+  const mine = role === 'rep' ? deals.filter((deal) => deal.rep === myName) : deals
+  const list = mine.filter((deal) =>
+    (deal.company + deal.client).toLowerCase().includes(search.toLowerCase()),
+  )
+  const last = (id: string) =>
+    activity
+      .filter((entry) => entry.dealId === id)
+      .map((entry) => entry.at)
+      .sort()
+      .pop()
   return (
     <Shell role={role}>
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><div><h1 className="text-2xl font-semibold">Clients</h1><p className="text-sm text-mute">{mine.length} companies</p></div>
-        <input className="inp max-w-xs" placeholder="Search clients" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && setQ('')} /></div>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold">Clients</h1>
+          <p className="text-sm text-mute">{mine.length} companies</p>
+        </div>
+        <input
+          className="inp max-w-xs"
+          placeholder="Search clients"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          onKeyDown={(event) => event.key === 'Escape' && setSearch('')}
+        />
+      </div>
       {list.length === 0 && <p className="box text-sm text-mute">No clients match your search.</p>}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{list.map((d) => <div key={d.id} className="box relative transition hover:border-brand hover:shadow-md">
-        <div className="flex items-center gap-3"><Avatar name={d.company} size={40} />
-          <div className="min-w-0"><p className="truncate font-medium"><Link href={`/${role}/deals/${d.id}`} className="after:absolute after:inset-0">{d.company}</Link></p><p className="text-xs text-mute">{d.client} · Rep <RepLink name={d.rep} /></p></div></div>
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs"><div><p className="text-base font-semibold">₹{Math.round(dealValue(quotes, d.id)).toLocaleString('en-IN')}</p><p className="text-mute">Value</p></div>
-          <div><p className="text-base font-semibold">{contacts.filter((c) => c.dealId === d.id).length}</p><p className="text-mute">Contacts</p></div>
-          <div><p className="text-base font-semibold">{STAGES[d.stage]}</p><p className="text-mute">Stage</p></div></div>
-        <p className="mt-3 text-xs text-mute">GST {d.gst || '—'} · Last activity {last(d.id) ? new Date(last(d.id)!).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}</p></div>)}</div>
-    </Shell>)
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {list.map((deal) => (
+          <div key={deal.id} className="box relative transition hover:border-brand hover:shadow-md">
+            <div className="flex items-center gap-3">
+              <Avatar name={deal.company} size={40} />
+              <div className="min-w-0">
+                <p className="truncate font-medium">
+                  <Link href={`/${role}/deals/${deal.id}`} className="after:absolute after:inset-0">
+                    {deal.company}
+                  </Link>
+                </p>
+                <p className="text-xs text-mute">
+                  {deal.client} · Rep <RepLink name={deal.rep} />
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+              <div>
+                <p className="text-base font-semibold">
+                  ₹{Math.round(dealValue(quotes, deal.id)).toLocaleString('en-IN')}
+                </p>
+                <p className="text-mute">Value</p>
+              </div>
+              <div>
+                <p className="text-base font-semibold">
+                  {contacts.filter((contact) => contact.dealId === deal.id).length}
+                </p>
+                <p className="text-mute">Contacts</p>
+              </div>
+              <div>
+                <p className="text-base font-semibold">{STAGES[deal.stage]}</p>
+                <p className="text-mute">Stage</p>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-mute">
+              GST {deal.gst || '—'} · Last activity{' '}
+              {last(deal.id)
+                ? new Date(last(deal.id)!).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                  })
+                : '—'}
+            </p>
+          </div>
+        ))}
+      </div>
+    </Shell>
+  )
 }
