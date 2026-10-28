@@ -72,11 +72,11 @@ export const hasPriceBelowMinimum = (quote: Quote, products: Product[]) =>
     return !!catalogProduct && item.price < catalogProduct.min
   })
 
-/** Who must approve a quote. A price below a product's minimum always needs the CEO; otherwise it depends on the discount. */
-export const approverForQuote = (quote: Quote, limits: Settings, products: Product[]) =>
-  hasPriceBelowMinimum(quote, products)
-    ? 'ceo'
-    : approverForDiscount(discountPercent(quote), limits)
+/** Who must approve a quote. It depends on the discount, but a price below a product's minimum is never auto-approved: Admin or CEO must sign it off (the CEO if the discount is also in the CEO range). */
+export const approverForQuote = (quote: Quote, limits: Settings, products: Product[]) => {
+  const byDiscount = approverForDiscount(discountPercent(quote), limits)
+  return hasPriceBelowMinimum(quote, products) && byDiscount === 'auto' ? 'admin' : byDiscount
+}
 
 /** A quote line with the default 18% GST. Used for the demo data and for new quotes. */
 export const makeItem = (

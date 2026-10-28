@@ -13,6 +13,7 @@ import Templates from '@/components/Templates'
 import FollowUp from '@/components/FollowUp'
 import RepLink from '@/components/RepLink'
 import Num from '@/components/Num'
+import PayDetails from '@/components/PayDetails'
 import { useStore } from '@/lib/store'
 import { Billing, Quote, Role } from '@/lib/types'
 import { STAGES } from '@/lib/constants'
@@ -20,6 +21,7 @@ import {
   annualRecurringRevenue,
   approverForQuote,
   discountPercent,
+  hasPriceBelowMinimum,
   lineDiscountPercent,
   lineListAmount,
   lineTotal,
@@ -107,6 +109,7 @@ export default function Deal() {
   const locked = !!q && q.status !== 'Draft' && q.status !== 'Rejected'
   const disc = q ? discountPercent(q) : 0
   const need = q ? approverForQuote(q, settings, products) : 'auto'
+  const belowMin = !!q && hasPriceBelowMinimum(q, products)
   return (
     <Shell role={r}>
       <div className="box">
@@ -226,7 +229,7 @@ export default function Deal() {
               return (
                 <div key={item.id} className="rounded-3xl border border-line p-3">
                   <div className="grid grid-cols-2 gap-x-2 gap-y-2 md:grid-cols-12">
-                    <label className={`${lab} col-span-2 md:col-span-3`}>
+                    <label className={`${lab} col-span-2 md:col-span-2`}>
                       Product
                       <select
                         disabled={locked}
@@ -252,6 +255,15 @@ export default function Deal() {
                       Original price
                       <p className="rounded-lg px-4 py-2 text-sm font-normal text-ink">
                         {formatINR(item.list)}
+                        <span className="text-xs text-mute">{per(item.billing)}</span>
+                      </p>
+                    </div>
+                    <div className={`${lab} md:col-span-2`}>
+                      Min price{rec ? ' (each)' : ''}
+                      <p
+                        className={`rounded-lg px-4 py-2 text-sm font-normal ${min !== undefined && item.price < min ? 'font-medium text-red-500' : 'text-ink'}`}
+                      >
+                        {min !== undefined ? formatINR(min) : '—'}
                         <span className="text-xs text-mute">{per(item.billing)}</span>
                       </p>
                     </div>
@@ -321,9 +333,9 @@ export default function Deal() {
                     ) : (
                       <span>No discount</span>
                     )}
-                    {min && item.price < min ? (
+                    {min !== undefined && item.price < min ? (
                       <span className="text-red-500">
-                        Below minimum price {formatINR(min)}: needs CEO
+                        Below minimum price {formatINR(min)}: needs Admin or CEO approval
                       </span>
                     ) : null}
                   </p>
@@ -359,7 +371,8 @@ export default function Deal() {
           )}
           <div className="mt-4 grid gap-4 border-t border-line pt-3 md:grid-cols-2">
             <p className="text-sm">
-              Discount <b>{disc.toFixed(1)}%</b> ·{' '}
+              Discount <b>{disc.toFixed(1)}%</b>
+              {belowMin && <span className="text-red-500"> · price below minimum</span>} ·{' '}
               {need === 'auto'
                 ? 'no approval needed'
                 : need === 'admin'
@@ -403,6 +416,19 @@ export default function Deal() {
               <span className="text-xs">(term is in months)</span>
             </p>
           )}
+          <label className="mt-4 grid gap-1 text-sm">
+            <span className="text-xs font-medium text-mute">
+              Terms and conditions (printed on this quotation)
+            </span>
+            <textarea
+              disabled={locked}
+              rows={4}
+              className="inp"
+              placeholder="e.g. 50% advance, balance on delivery. Valid for 14 days."
+              value={q.terms ?? settings.defaultTerms ?? ''}
+              onChange={(event) => saveQuote({ ...q, terms: event.target.value })}
+            />
+          </label>
           <div className="mt-3 flex flex-wrap gap-2">
             {!locked && (
               <>
@@ -533,6 +559,13 @@ export default function Deal() {
             </p>
           </div>
           <p className="text-right text-xl font-bold">Total {formatINR(quoteTotal(q))}</p>
+          {(q.terms ?? settings.defaultTerms)?.trim() && (
+            <div className="mt-6 text-sm">
+              <p className="font-semibold">Terms and conditions</p>
+              <p className="mt-1 whitespace-pre-line">{q.terms ?? settings.defaultTerms}</p>
+            </div>
+          )}
+          <PayDetails />
         </div>
       )}
     </Shell>

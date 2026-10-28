@@ -53,8 +53,10 @@ crm/
 │   ├── FollowUp.tsx            # Follow-up reminder card on a deal, with quick dates and snooze.
 │   ├── NewDeal.tsx             # "New deal" button and dialog, including the duplicate check.
 │   ├── Num.tsx                 # Number input that lets you type freely.
+│   ├── PayDetails.tsx          # "Pay to" block (bank details and QR code from Settings) for invoices and quotations.
 │   ├── PhotoUpload.tsx         # Profile photo picker that crops and shrinks the image.
 │   ├── QuickTask.tsx           # Small form for adding a task.
+│   ├── QrUpload.tsx            # Settings picker for the payment QR image (shrinks it to fit browser storage).
 │   ├── RepLink.tsx             # A rep's name. Admin and CEO can click it to open the rep's profile.
 │   ├── RepProgress.tsx         # Target progress, stats and editable details for a rep.
 │   ├── Shell.tsx               # App frame: sidebar, top bar, tabs, mobile nav, session guard and reminder timer.

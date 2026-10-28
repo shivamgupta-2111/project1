@@ -12,7 +12,7 @@ import { formatINR } from '@/lib/format'
 
 export default function Invoices() {
   const role = useParams().role as Role
-  const { invoices, deals, quotes, createInvoice, setInvoicePaid } = useStore()
+  const { invoices, deals, quotes, createInvoice, setInvoicePaid, settings } = useStore()
   const myName = useStore((state) => state.users.find((user) => user.id === state.meId)?.name)
   const visible = (dealId: string) =>
     role !== 'rep' || deals.find((deal) => deal.id === dealId)?.rep === myName
@@ -96,7 +96,12 @@ export default function Invoices() {
                           const q = quotes.find((quote) => quote.id === invoice.quoteId)
                           const d = deals.find((deal) => deal.id === invoice.dealId)
                           if (q && d) {
-                            downloadInvoicePdf(invoice, q, d)
+                            downloadInvoicePdf(
+                              { ...invoice, terms: invoice.terms ?? q.terms ?? settings.defaultTerms },
+                              q,
+                              d,
+                              settings,
+                            )
                             toast(`${invoice.id}.pdf downloaded`)
                           }
                         }}

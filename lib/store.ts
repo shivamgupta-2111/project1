@@ -5,7 +5,14 @@ import { Billing, CrmState, QStatus, Quote, Role } from '@/lib/types'
 import { todayPlus, uid } from '@/lib/utils'
 import { seedData } from '@/lib/seed'
 import { dealValue } from '@/lib/deals'
-import { approverForQuote, discountPercent, lineTotal, quoteTotal, makeItem } from '@/lib/pricing'
+import {
+  approverForQuote,
+  discountPercent,
+  hasPriceBelowMinimum,
+  lineTotal,
+  quoteTotal,
+  makeItem,
+} from '@/lib/pricing'
 import { buildPaymentSchedule } from '@/lib/payments'
 import { STAGES } from '@/lib/constants'
 
@@ -202,6 +209,7 @@ export const useStore = create<CrmState>()(
                 due: todayPlus(15),
                 status: 'Unpaid',
                 by,
+                terms: q.terms ?? get().settings.defaultTerms,
               },
               ...get().invoices,
             ],
@@ -220,6 +228,13 @@ export const useStore = create<CrmState>()(
           })
           if (inv) log(inv.dealId, `Invoice ${id} marked ${paid ? 'paid' : 'unpaid'}`)
         },
+        /** Edit an invoice's terms and conditions. */
+        updateInvoice: (id, changes) =>
+          set({
+            invoices: get().invoices.map((invoice) =>
+              invoice.id === id ? { ...invoice, ...changes } : invoice,
+            ),
+          }),
         /** Mark one scheduled payment as paid, or put it back to due. */
         markPaymentPaid: (id, paid) => {
           const p = get().payments.find((payment) => payment.id === id)!
@@ -447,6 +462,7 @@ export const useStore = create<CrmState>()(
             log: [from ? `Duplicated from ${from.id}` : 'Created'],
             expires: new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10),
             startDate: from?.startDate,
+            terms: from?.terms ?? get().settings.defaultTerms,
           }
           set({ quotes: [...get().quotes, quote] })
           log(dealId, `Quote ${id} created`)
@@ -464,7 +480,7 @@ export const useStore = create<CrmState>()(
           if (newDueDate !== 'auto')
             notify(
               newDueDate === 'admin' ? ['admin', 'ceo'] : ['ceo'],
-              `${id} for ${dl?.company} needs approval (${discountPercent(cq).toFixed(1)}% off)`,
+              `${id} for ${dl?.company} needs approval (${discountPercent(cq).toFixed(1)}% off${hasPriceBelowMinimum(cq, get().products) ? ', price below minimum' : ''})`,
               `approvals`,
             )
           set({

@@ -1,8 +1,8 @@
 /** Draws an invoice as a PDF using jsPDF. */
-import type { Invoice, Quote, Deal } from '@/lib/types'
+import type { Invoice, Quote, Deal, Settings } from '@/lib/types'
 import { lineDiscountPercent, lineListAmount, lineTotal } from '@/lib/pricing'
 
-export async function downloadInvoicePdf(inv: Invoice, quote: Quote, deal: Deal) {
+export async function downloadInvoicePdf(inv: Invoice, quote: Quote, deal: Deal, settings: Settings) {
   const { jsPDF } = await import('jspdf')
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
   const W = 210
@@ -83,6 +83,64 @@ export async function downloadInvoicePdf(inv: Invoice, quote: Quote, deal: Deal)
   doc.setFontSize(13)
   doc.text('Total', 125, y)
   doc.text(rs(inv.amount), W - 15, y, { align: 'right' })
+  doc.setFontSize(10)
+  y += 14
+  // bank details and QR code
+  const bank = settings.bank
+  const bankRows = (
+    [
+      ['Account name', bank?.accountName],
+      ['Bank', bank?.bankName],
+      ['Account no.', bank?.accountNo],
+      ['IFSC', bank?.ifsc],
+      ['UPI ID', bank?.upi],
+    ] as [string, string | undefined][]
+  ).filter(([, value]) => value?.trim())
+  if (bankRows.length || settings.qr) {
+    const blockHeight = Math.max(bankRows.length * 6 + 8, settings.qr ? 38 : 0)
+    if (y + blockHeight > 275) {
+      doc.addPage()
+      y = 20
+    }
+    doc.setTextColor(110, 110, 115)
+    doc.text('Pay to', 15, y)
+    bankRows.forEach(([label, value], index) => {
+      doc.setTextColor(110, 110, 115)
+      doc.text(label, 15, y + 7 + index * 6)
+      doc.setTextColor(26, 26, 46)
+      doc.text(String(value), 45, y + 7 + index * 6)
+    })
+    if (settings.qr) {
+      doc.addImage(settings.qr, 'PNG', W - 15 - 32, y - 3, 32, 32)
+      doc.setFontSize(8)
+      doc.setTextColor(110, 110, 115)
+      doc.text('Scan to pay', W - 15 - 16, y + 33, { align: 'center' })
+      doc.setFontSize(10)
+    }
+    y += blockHeight + 6
+  }
+  // terms and conditions (the PDF font has no rupee sign, so it becomes "Rs.")
+  const terms = (inv.terms ?? '').replace(/₹/g, 'Rs. ').trim()
+  if (terms) {
+    doc.setTextColor(26, 26, 46)
+    doc.setFontSize(10)
+    if (y > 265) {
+      doc.addPage()
+      y = 20
+    }
+    doc.text('Terms and conditions', 15, y)
+    y += 6
+    doc.setFontSize(9)
+    doc.setTextColor(60, 60, 65)
+    for (const line of doc.splitTextToSize(terms, W - 30) as string[]) {
+      if (y > 278) {
+        doc.addPage()
+        y = 20
+      }
+      doc.text(line, 15, y)
+      y += 4.5
+    }
+  }
   doc.setFontSize(9)
   doc.setTextColor(110, 110, 115)
   doc.text(`Created by ${inv.by}. Thank you for your business.`, 15, 285)

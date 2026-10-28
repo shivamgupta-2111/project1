@@ -51,3 +51,9 @@ Deal page → "Call & meeting log": type, who with, when, duration, outcome, not
 Deal page → "Follow-up reminder": quick dates or a custom date + note. You get a bell notification on the due date (only you, not other users), it shows in Tasks with a Follow-up tag, and can be snoozed a day. Reminders are checked on load and every 5 minutes while the app is open.
 ## Rep profiles
 Admin/CEO: click any rep name (deals, clients, stages, pipeline, tasks, reports, audit log, dashboard leaderboard) to open `/team/[id]` with Overview, Deals, Calls & meetings, Tasks, Activity and Profile tabs.
+## Terms and conditions
+Settings → Default terms and conditions pre-fills new quotations and invoices. Each quotation has its own Terms box on the deal page (printed on the quotation). When an invoice is created it copies the quotation's terms; Admin can edit them on the invoice page, so invoice terms can differ from the quotation.
+## Bank details and QR code
+Settings → Bank details and payment QR. Account name, bank, account number, IFSC, UPI ID and a QR image appear in a "Pay to" block on every invoice (screen, print and PDF) and on printed quotations. Empty fields are hidden. Bank details are read live from Settings, so changing them updates old invoices too.
+## Minimum price
+The quote editor shows each product's minimum price. A price below it needs Admin or CEO approval (CEO if the discount is also above the Admin limit). Clients page shows risk level, latest quotation number and invoice number.

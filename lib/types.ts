@@ -28,6 +28,8 @@ export type Quote = {
   expires: string
   final?: boolean
   startDate?: string
+  /** Terms and conditions printed on this quotation. Falls back to the default in Settings. */
+  terms?: string
 }
 
 export type Deal = {
@@ -109,6 +111,8 @@ export type Invoice = {
   due: string
   status: 'Unpaid' | 'Paid'
   by: string
+  /** Terms and conditions printed on this invoice (can differ from the quotation). */
+  terms?: string
 }
 
 export type Payment = {
@@ -139,7 +143,25 @@ export type Task = {
 
 export type Product = { id: string; name: string; list: number; min: number; billing?: Billing }
 
-export type Settings = { auto: number; admin: number; remindDays?: number }
+/** Where the client should send the money. Shown on invoices and quotations. */
+export type BankDetails = {
+  accountName: string
+  bankName: string
+  accountNo: string
+  ifsc: string
+  upi: string
+}
+
+export type Settings = {
+  auto: number
+  admin: number
+  remindDays?: number
+  /** Terms and conditions pre-filled on new quotations and invoices. */
+  defaultTerms?: string
+  bank?: BankDetails
+  /** Payment QR code image, stored as a data URL. */
+  qr?: string
+}
 
 /** Everything the store keeps as data (this is what gets saved to localStorage). */
 export type CrmData = {
@@ -174,6 +196,7 @@ export type CrmActions = {
   markQuoteFinal: (quoteId: string) => void
   createInvoice: (quoteId: string, by: string) => string
   setInvoicePaid: (id: string, paid: boolean) => void
+  updateInvoice: (id: string, changes: Partial<Pick<Invoice, 'terms'>>) => void
   addTask: (task: Omit<Task, 'id' | 'done'>) => void
   addFollowUp: (dealId: string, due: string, note?: string) => void
   snoozeTask: (id: string, days: number) => void

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import Shell from '@/components/Shell'
+import PayDetails from '@/components/PayDetails'
 import { downloadInvoicePdf } from '@/lib/invoicePdf'
 import { useStore } from '@/lib/store'
 import { Role } from '@/lib/types'
@@ -11,7 +12,7 @@ import { formatINR } from '@/lib/format'
 
 export default function InvoicePage() {
   const { role: r, id } = useParams() as { role: Role; id: string }
-  const { invoices, quotes, deals, setInvoicePaid } = useStore()
+  const { invoices, quotes, deals, setInvoicePaid, updateInvoice, settings } = useStore()
   const inv = invoices.find((invoice) => invoice.id === id)
   const q = inv && quotes.find((quote) => quote.id === inv.quoteId)
   const d = inv && deals.find((deal) => deal.id === inv.dealId)
@@ -22,6 +23,7 @@ export default function InvoicePage() {
       </Shell>
     )
   const orig = q.items.reduce((sum, item) => sum + lineListAmount(item), 0)
+  const terms = inv.terms ?? q.terms ?? settings.defaultTerms ?? ''
   return (
     <Shell role={r}>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -37,11 +39,25 @@ export default function InvoicePage() {
           <button className="btn2" onClick={() => window.print()}>
             Print
           </button>
-          <button className="btn" onClick={() => downloadInvoicePdf(inv, q, d)}>
+          <button className="btn" onClick={() => downloadInvoicePdf({ ...inv, terms }, q, d, settings)}>
             Download PDF
           </button>
         </div>
       </div>
+      {r === 'admin' && (
+        <label className="box mb-4 grid gap-1 text-sm">
+          <span className="text-xs font-medium text-mute">
+            Terms and conditions for this invoice (can differ from the quotation)
+          </span>
+          <textarea
+            rows={4}
+            className="inp"
+            placeholder="e.g. Payment due within 15 days. Late fee of 2% per month."
+            value={terms}
+            onChange={(event) => updateInvoice(inv.id, { terms: event.target.value })}
+          />
+        </label>
+      )}
       <div className="print-area rounded-2xl border border-line bg-white p-6 text-[#1a1a2e] shadow-sm md:p-10">
         <div className="flex flex-wrap justify-between gap-4">
           <div>
@@ -146,6 +162,13 @@ export default function InvoicePage() {
             <span>{formatINR(inv.amount)}</span>
           </p>
         </div>
+        {terms.trim() && (
+          <div className="mt-8 text-sm">
+            <p className="font-semibold">Terms and conditions</p>
+            <p className="mt-1 whitespace-pre-line">{terms}</p>
+          </div>
+        )}
+        <PayDetails />
         <p className="mt-8 text-xs text-[#6e6e73]">
           Created by {inv.by}. Thank you for your business.
         </p>

@@ -3,8 +3,9 @@
 import { useParams } from 'next/navigation'
 import { Trash2, Plus } from 'lucide-react'
 import Shell from '@/components/Shell'
+import QrUpload from '@/components/QrUpload'
 import { useStore } from '@/lib/store'
-import { Billing, Role } from '@/lib/types'
+import { Billing, BankDetails, Role } from '@/lib/types'
 
 const TEAM = [
   ['Anita Rao', 'anita@demo.com', 'Sales rep'],
@@ -22,6 +23,21 @@ export default function SettingsPage() {
       </Shell>
     )
   const num = (v: string) => Math.max(0, Math.min(100, Number(v) || 0))
+  const bank: BankDetails = {
+    accountName: '',
+    bankName: '',
+    accountNo: '',
+    ifsc: '',
+    upi: '',
+    ...settings.bank,
+  }
+  const BANK_FIELDS: [keyof BankDetails, string][] = [
+    ['accountName', 'Account name'],
+    ['bankName', 'Bank name'],
+    ['accountNo', 'Account number'],
+    ['ifsc', 'IFSC code'],
+    ['upi', 'UPI ID'],
+  ]
   return (
     <Shell role={role}>
       <h1 className="text-2xl font-semibold">Settings</h1>
@@ -58,8 +74,46 @@ export default function SettingsPage() {
           <li>
             {settings.auto}–{settings.admin}%: Admin or CEO
           </li>
-          <li>Above {settings.admin}% or below a product’s minimum price: CEO only</li>
+          <li>Above {settings.admin}%: CEO only</li>
+          <li>
+            Any price below a product’s minimum: Admin or CEO (CEO if the discount is also above{' '}
+            {settings.admin}%)
+          </li>
         </ul>
+      </div>
+      <div className="box mt-4">
+        <p className="font-medium">Bank details and payment QR</p>
+        <p className="mb-3 text-xs text-mute">
+          Shown in a “Pay to” block on every invoice and quotation. Leave a field empty to hide it.
+        </p>
+        <div className="grid gap-3 md:grid-cols-2">
+          {BANK_FIELDS.map(([key, label]) => (
+            <label key={key} className="grid gap-1 text-sm">
+              {label}
+              <input
+                className="inp"
+                value={bank[key]}
+                onChange={(event) => setSettings({ bank: { ...bank, [key]: event.target.value } })}
+              />
+            </label>
+          ))}
+        </div>
+        <div className="mt-4">
+          <QrUpload />
+        </div>
+      </div>
+      <div className="box mt-4">
+        <p className="font-medium">Default terms and conditions</p>
+        <p className="mb-3 text-xs text-mute">
+          Pre-filled on new quotations and invoices. You can still change the text on each one.
+        </p>
+        <textarea
+          rows={5}
+          className="inp"
+          placeholder="e.g. Payment within 15 days. Prices exclude taxes unless stated."
+          value={settings.defaultTerms ?? ''}
+          onChange={(event) => setSettings({ defaultTerms: event.target.value })}
+        />
       </div>
       <div className="box mt-4">
         <p className="font-medium">Payment reminders</p>

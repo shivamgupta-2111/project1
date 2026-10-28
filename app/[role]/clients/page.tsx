@@ -8,17 +8,25 @@ import Avatar from '@/components/Avatar'
 import RepLink from '@/components/RepLink'
 import { useStore } from '@/lib/store'
 import { Role } from '@/lib/types'
-import { dealValue } from '@/lib/deals'
+import { dealInvoice, dealValue, latestQuote } from '@/lib/deals'
 import { STAGES } from '@/lib/constants'
+import { RISK_STYLES } from '@/lib/ui'
 
 export default function Clients() {
   const role = useParams().role as Role
   const myName = useStore((state) => state.users.find((user) => user.id === state.meId)?.name)
-  const { deals, quotes, contacts, activity } = useStore()
+  const { deals, quotes, invoices, contacts, activity } = useStore()
   const [search, setSearch] = useState('')
   const mine = role === 'rep' ? deals.filter((deal) => deal.rep === myName) : deals
   const list = mine.filter((deal) =>
-    (deal.company + deal.client).toLowerCase().includes(search.toLowerCase()),
+    (
+      deal.company +
+      deal.client +
+      (latestQuote(quotes, deal.id)?.id ?? '') +
+      (dealInvoice(invoices, deal.id)?.id ?? '')
+    )
+      .toLowerCase()
+      .includes(search.toLowerCase()),
   )
   const last = (id: string) =>
     activity
@@ -35,7 +43,7 @@ export default function Clients() {
         </div>
         <input
           className="inp max-w-xs"
-          placeholder="Search clients"
+          placeholder="Search client, quote or invoice no."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           onKeyDown={(event) => event.key === 'Escape' && setSearch('')}
@@ -57,6 +65,9 @@ export default function Clients() {
                   {deal.client} · Rep <RepLink name={deal.rep} />
                 </p>
               </div>
+              <span className={`pill relative ml-auto ${RISK_STYLES[deal.risk]}`}>
+                {deal.risk} risk
+              </span>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
               <div>
@@ -75,6 +86,24 @@ export default function Clients() {
                 <p className="text-base font-semibold">{STAGES[deal.stage]}</p>
                 <p className="text-mute">Stage</p>
               </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 border-t border-line pt-3 text-xs">
+              <p>
+                <span className="text-mute">Latest quote</span>
+                <br />
+                <b>{latestQuote(quotes, deal.id)?.id ?? '—'}</b>
+                {latestQuote(quotes, deal.id) && (
+                  <span className="text-mute"> · {latestQuote(quotes, deal.id)!.status}</span>
+                )}
+              </p>
+              <p>
+                <span className="text-mute">Invoice no.</span>
+                <br />
+                <b>{dealInvoice(invoices, deal.id)?.id ?? '—'}</b>
+                {dealInvoice(invoices, deal.id) && (
+                  <span className="text-mute"> · {dealInvoice(invoices, deal.id)!.status}</span>
+                )}
+              </p>
             </div>
             <p className="mt-3 text-xs text-mute">
               GST {deal.gst || '—'} · Last activity{' '}

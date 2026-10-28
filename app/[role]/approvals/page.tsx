@@ -8,6 +8,7 @@ import { useStore } from '@/lib/store'
 import { Role } from '@/lib/types'
 import {
   discountPercent,
+  hasPriceBelowMinimum,
   quoteDiscountAmount,
   quoteListTotal,
   quoteSubtotal,
@@ -16,7 +17,7 @@ import {
 
 export default function Approvals() {
   const role = useParams().role as Role
-  const { quotes, deals, decideApproval } = useStore()
+  const { quotes, deals, products, decideApproval } = useStore()
   const [comments, setComments] = useState<Record<string, string>>({})
   const list = quotes.filter(
     (quote) => quote.status === 'Pending approval' && (role === 'ceo' || quote.need === 'admin'),
@@ -51,6 +52,21 @@ export default function Approvals() {
                   {Math.round(quoteDiscountAmount(quote)).toLocaleString('en-IN')}
                 </span>
               </p>
+              {hasPriceBelowMinimum(quote, products) && (
+                <p className="mt-1 text-sm text-red-500">
+                  Price below minimum:{' '}
+                  {quote.items
+                    .filter((item) => {
+                      const min = products.find((product) => product.name === item.product)?.min
+                      return min !== undefined && item.price < min
+                    })
+                    .map((item) => {
+                      const min = products.find((product) => product.name === item.product)!.min
+                      return `${item.product} ₹${Math.round(item.price).toLocaleString('en-IN')} (min ₹${Math.round(min).toLocaleString('en-IN')})`
+                    })
+                    .join(', ')}
+                </p>
+              )}
               <p className="mt-1 text-sm text-mute">Reason: {quote.reason}</p>
               <input
                 className="inp mt-3"
