@@ -1,8 +1,18 @@
-import './globals.css'
-import { ThemeProvider } from 'next-themes'
-export const metadata = { title: { default: 'Pipeline CRM', template: '%s · Pipeline CRM' }, description: 'Sales CRM with quotations and approvals' }
-import Toaster from '@/components/Toaster'
-import CloseDialog from '@/components/CloseDialog'
+import type { Metadata } from "next";
+import "./globals.css";
+import { StoreProvider } from "@/lib/store";
+
+export const metadata: Metadata = {
+  title: "Warehouse ERP",
+  description: "Grocery, Bright Idea & Raw Material warehouse management",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <html lang="en" suppressHydrationWarning><body><ThemeProvider attribute="class" defaultTheme="system" enableSystem>{children}<Toaster /><CloseDialog /></ThemeProvider></body></html>
+  return (
+    <html lang="en">
+      <body>
+        <StoreProvider>{children}</StoreProvider>
+      </body>
+    </html>
+  );
 }
